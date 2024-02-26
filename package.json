@@ -1,0 +1,26 @@
+{
+  "name": "photosapp_server",
+  "version": "1.0.0",
+  "description": "Handles photo selection",
+  "main": "index.js",
+  "repository": "https://github.com/justjooshing/photosapp_server",
+  "author": "Josh <joshua.l.mertens@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --delay 500ms index.js",
+    "main": "nodemon --delay 500ms main.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "google-auth-library": "^9.6.3",
+    "googleapis": "^133.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemon": "^3.0.3"
+  }
+}
