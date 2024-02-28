@@ -18,9 +18,8 @@ export const CONFIG = {
     client_secret: process.env.GOOGLE_CLIENT_ID,
     redirect_uris: [`${baseURL}/auth/google/callback`],
     // https://developers.google.com/photos/library/reference/rest/v1/albums/create
-    // https://www.googleapis.com/auth/photoslibrary
     // albums.create
     // albums.batchAddMediaItems
-    scopes: ["https://www.googleapis.com/auth/youtube.readonly"],
+    scopes: ["https://www.googleapis.com/auth/photoslibrary"],
   },
 };
