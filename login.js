@@ -6,12 +6,13 @@ const OAuth2 = google.auth.OAuth2;
 // Including our config file
 import { CONFIG } from "./config.js";
 
-export const getLoginLink = () => {
-  const oauth2Client = new OAuth2({
-    clientId: CONFIG.oauth2Credentials.client_id,
-    redirectUri: CONFIG.oauth2Credentials.redirect_uris[0],
-  });
+export const oauth2Client = new OAuth2({
+  clientId: CONFIG.oauth2Credentials.client_id,
+  redirectUri: CONFIG.oauth2Credentials.redirect_uris[0],
+  clientSecret: CONFIG.oauth2Credentials.client_secret,
+});
 
+export const getLoginLink = () => {
   const loginLink = oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: CONFIG.oauth2Credentials.scopes,

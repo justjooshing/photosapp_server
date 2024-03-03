@@ -9,10 +9,10 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --delay 500ms index.js",
-    "main": "nodemon --delay 500ms main.js",
     "start": "node index.js"
   },
   "dependencies": {
+    "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
