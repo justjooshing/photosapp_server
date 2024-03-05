@@ -1,6 +1,6 @@
 // https://dev.to/aidanlovelace/how-to-setup-google-oauth2-login-with-express-2d30
 import { google } from "googleapis";
-import { CONFIG } from "./src/config/index.ts";
+import { CONFIG } from "../config/index.ts";
 
 // Google's OAuth2 client
 const OAuth2 = google.auth.OAuth2;
