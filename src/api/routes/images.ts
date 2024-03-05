@@ -33,7 +33,7 @@ export const images = (app: Router) => {
       if (!!req.body?.image) {
         checkJWT(req);
         imageUrls = imageUrls.filter((old) => old.id !== req.body.image.id);
-        res.json({});
+        res.status(201).json({});
       }
     } catch (err) {
       console.log("post err", err);
