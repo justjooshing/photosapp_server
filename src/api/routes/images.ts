@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { checkJWT } from "../../services/auth/auth.ts";
-import { fetchPhotos } from "../../services/images/images.ts";
+import { getImages } from "../../services/images/images.ts";
 
 const route = Router();
 
-let imageUrls: { source: string; id: string }[];
+let imageUrls: { source: string; id: number; width: number; height: number }[];
 
 export const images = (app: Router) => {
   app.use("/images", route);
@@ -13,9 +13,15 @@ export const images = (app: Router) => {
     try {
       const access_token = checkJWT(req);
       if (access_token) {
-        const fetchedImages = await fetchPhotos(access_token);
+        /**
+         * fetch > db (if not already deleted)
+         * sql query to return grouped images
+         * if !groupedImages fetch again?
+         */
+        const fetchedImages = await getImages(access_token);
         if (fetchedImages) {
           // reset images after sorting through them
+          // should update to use /nextPage if no arrays
           if (!imageUrls?.length) {
             imageUrls = fetchedImages;
           }

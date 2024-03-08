@@ -16,22 +16,20 @@ interface Photo extends CameraDetails {
   exposureTime: string; //time ending in s
 }
 
-interface MediaItems {
+interface MediaItems<T> {
   id: string;
   productUrl: string;
   baseUrl: string;
   mimeType: "video/mp4" | "image/jpeg" | string;
-  mediaMetadata: (
-    | { video: Video; photo: never }
-    | { photo: Photo; video: never }
-  ) & {
+  mediaMetadata: T & {
     creationTime: string; // Timestamp
     width: string;
     height: string;
   };
 }
 
-export type Images = { mediaItems: MediaItems[] };
+export type Images = { mediaItems: MediaItems<Photo>[] };
+export type Videos = { mediaItems: MediaItems<Video>[] };
 
 /************************
  SEARCH OPTIONS

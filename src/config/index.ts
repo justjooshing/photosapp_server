@@ -25,6 +25,9 @@ export const CONFIG = {
     // https://developers.google.com/photos/library/reference/rest/v1/mediaItems
     // albums.create
     // albums.batchAddMediaItems
-    scopes: ["https://www.googleapis.com/auth/photoslibrary"],
+    scopes: [
+      "https://www.googleapis.com/auth/photoslibrary",
+      "https://www.googleapis.com/auth/userinfo.email",
+    ],
   },
 };

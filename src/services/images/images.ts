@@ -1,9 +1,11 @@
 import ky from "ky";
 import { Images, MediaItemSearch } from "./types.ts";
+import { prisma } from "../../loaders/prisma.ts";
+import { getUserData } from "../user/user.ts";
 
 const currentDate = new Date();
 const searchParams: MediaItemSearch = {
-  pageSize: 50,
+  pageSize: 100,
   filters: {
     mediaTypeFilter: {
       mediaTypes: "PHOTO",
@@ -21,7 +23,40 @@ const searchParams: MediaItemSearch = {
   },
 };
 
-export const fetchPhotos = async (access_token: string) => {
+const identifyNewImages = async (userId: number, images: Images) => {
+  const newImages: Images["mediaItems"] = [];
+
+  for (const image of images.mediaItems) {
+    const existingImage = await prisma.images.findUnique({
+      where: {
+        userId,
+        googleId: image.id,
+      },
+    });
+    if (!existingImage) {
+      newImages.push(image);
+    }
+  }
+  return newImages;
+};
+
+const updateImagesDB = async (userId: number, images: Images) => {
+  const newImages = await identifyNewImages(userId, images);
+  if (!!newImages.length) {
+    await prisma.images.createMany({
+      data: newImages.map((image) => ({
+        googleId: image.id,
+        userId,
+        photoUrl: image.baseUrl,
+        created_at: image.mediaMetadata.creationTime,
+        width: Number(image.mediaMetadata.width),
+        height: Number(image.mediaMetadata.height),
+      })),
+    });
+  }
+};
+
+export const getImages = async (access_token: string) => {
   try {
     const client = ky.create({
       headers: {
@@ -33,21 +68,30 @@ export const fetchPhotos = async (access_token: string) => {
       "https://photoslibrary.googleapis.com/v1/mediaItems:search";
 
     const res = await client.post(endpoint);
+    const newImages = await res.json<Images>();
 
-    const images: Images = await res.json();
+    const { id: userId } = await getUserData(access_token);
+    await updateImagesDB(userId, newImages);
 
-    if (!images.mediaItems?.length) {
+    const images = await prisma.images.findMany({
+      where: {
+        userId,
+        created_at: {
+          //what do I want to put here
+        },
+      },
+    });
+
+    if (!images.length) {
       return [];
     }
 
-    const urls = images.mediaItems.map(
-      ({ baseUrl, id, mediaMetadata: { height, width } }) => ({
-        source: baseUrl,
-        id,
-        height,
-        width,
-      })
-    );
+    const urls = images.map(({ photoUrl, id, height, width }) => ({
+      source: photoUrl,
+      id,
+      height,
+      width,
+    }));
 
     return urls;
   } catch (err) {
