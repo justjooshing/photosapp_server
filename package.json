@@ -12,6 +12,7 @@
     "start": "npx tsc && cd dist && node index.js"
   },
   "dependencies": {
+    "@prisma/client": "^5.10.2",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -30,6 +31,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.11.24",
     "dotenv": "^16.4.5",
+    "prisma": "^5.10.2",
     "tsx": "^4.7.1",
     "typescript": "^5.3.3"
   }
