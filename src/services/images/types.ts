@@ -9,7 +9,7 @@ interface Video extends CameraDetails {
   status: "UNSPECIFIED" | "PROCESSING" | "READY" | "FAILED";
 }
 
-interface Photo extends CameraDetails {
+export interface Photo extends CameraDetails {
   focalLength: number;
   apertureFNumber: number;
   isoEquivalent: number;
@@ -30,6 +30,29 @@ interface MediaItems<T> {
 
 export type Images = { mediaItems: MediaItems<Photo>[] };
 export type Videos = { mediaItems: MediaItems<Video>[] };
+
+export interface MediaItem<T> extends MediaItems<T> {
+  contributorInfo: {
+    profilePictureBaseUrl: string;
+    displayName: string;
+  };
+  filename: string;
+}
+interface Status {
+  code: number;
+  message: string;
+  details: {
+    "@type": string;
+    [key: string]: string;
+  }[];
+}
+export type MediaItemResultsImages = {
+  mediaItemResults: ({ mediaItem: MediaItem<Photo> } | Status)[];
+};
+
+export type MediaItemResultsVideo = {
+  mediaItemResults: (MediaItem<Video> | Status)[];
+};
 
 /************************
  SEARCH OPTIONS
