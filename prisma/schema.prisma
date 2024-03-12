@@ -14,11 +14,13 @@ datasource db {
 }
 
 model User {
-  id                   Int      @id @default(autoincrement())
-  email                String   @unique
-  googleId             String   @unique
-  googleProfilePicture String   @unique
-  Images               Images[]
+  id                     Int       @id @default(autoincrement())
+  email                  String    @unique
+  googleId               String    @unique
+  googleProfilePicture   String    @unique
+  created_at             DateTime? @default(now())
+  images_last_updated_at DateTime? @default(now())
+  Images                 Images[]
 }
 
 model Images {
