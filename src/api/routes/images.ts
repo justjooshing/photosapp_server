@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { checkJWT } from "../../services/auth/auth.ts";
-import { getImages } from "../../services/images/images.ts";
+import { getDayAndMonthImages } from "../../services/images/images.ts";
+import { addFreshBaseUrls } from "../middlewares/images/images.ts";
 
 const route = Router();
 
@@ -13,20 +14,28 @@ export const images = (app: Router) => {
     try {
       const access_token = checkJWT(req);
       if (access_token) {
-        /**
-         * fetch > db (if not already deleted)
-         * sql query to return grouped images
-         * if !groupedImages fetch again?
-         */
-        const fetchedImages = await getImages(access_token);
-        if (fetchedImages) {
-          // reset images after sorting through them
-          // should update to use /nextPage if no arrays
-          if (!imageUrls?.length) {
-            imageUrls = fetchedImages;
-          }
+        const imagesMatchingCurrentDayAndMonth = await getDayAndMonthImages(
+          access_token
+        );
+        if (!imagesMatchingCurrentDayAndMonth?.length) {
+          res.json({ imageUrls: [] });
         }
-        res.json({ imageUrls });
+
+        const updatedImages = await addFreshBaseUrls(
+          access_token,
+          imagesMatchingCurrentDayAndMonth
+        );
+
+        const response = updatedImages.map(
+          ({ photoUrl, id, height, width }) => ({
+            source: photoUrl,
+            id,
+            height,
+            width,
+          })
+        );
+
+        res.json({ imageUrls: response });
       }
     } catch (err) {
       console.log("get error", err);

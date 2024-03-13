@@ -28,8 +28,8 @@ interface MediaItems<T> {
   };
 }
 
-export type Images = { mediaItems: MediaItems<Photo>[] };
-export type Videos = { mediaItems: MediaItems<Video>[] };
+export type Images = { mediaItems: MediaItems<Photo>[]; nextPageToken: string };
+export type Videos = { mediaItems: MediaItems<Video>[]; nextPageToken: string };
 
 export interface MediaItem<T> extends MediaItems<T> {
   contributorInfo: {
@@ -114,7 +114,7 @@ interface MediaTypeFilter {
 interface FeatureFilter {
   includedFeatures: "NONE" | "FAVORITES";
 }
-type Filters = Partial<{
+export type Filters = Partial<{
   dateFilter: DateFilter;
   contentFilter: ContentFilter;
   mediaTypeFilter: MediaTypeFilter;
@@ -130,3 +130,16 @@ export type MediaItemSearch = Partial<{
   filters: Filters;
   orderBy: string;
 }>;
+
+export interface HandleGetImages {
+  access_token: string;
+  options:
+    | {
+        method: ":search";
+        bodyParams: MediaItemSearch;
+      }
+    | {
+        method: ":batchGet";
+        searchParams: URLSearchParams;
+      };
+}
