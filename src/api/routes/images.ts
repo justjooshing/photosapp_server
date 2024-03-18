@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { checkJWT } from "../../services/auth/auth.ts";
 import {
   addFreshBaseUrls,
   getDayAndMonthImages,
@@ -10,6 +9,7 @@ import {
   updateImagesDB,
 } from "../middlewares/images/images.ts";
 import { getUserData, updateUsersDB } from "../middlewares/user/user.ts";
+import { checkJWT } from "../middlewares/auth/auth.ts";
 
 const route = Router();
 
