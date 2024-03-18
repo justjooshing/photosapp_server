@@ -6,13 +6,10 @@ import {
   MediaItemResultsImages,
   MediaItemSearch,
 } from "./types.ts";
-import { prisma } from "../../loaders/prisma.ts";
-import { getUserData } from "../user/user.ts";
-import { Prisma, Images as SchemaImages } from "@prisma/client";
 
 const endpoint = "https://photoslibrary.googleapis.com/v1/mediaItems";
-const currentDate = new Date();
-const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
+
+export const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
   pageSize: 100,
   filters: {
     mediaTypeFilter: {
@@ -22,48 +19,6 @@ const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
   },
   ...options,
 });
-
-const identifyNewImages = async (
-  userId: number,
-  images: Images["mediaItems"] = []
-) => {
-  const newImages: Images["mediaItems"] = [];
-  for (const image of images) {
-    const existingImage = await prisma.images.findUnique({
-      where: {
-        userId,
-        googleId: image.id,
-      },
-    });
-    if (!existingImage) {
-      newImages.push(image);
-    }
-  }
-  return newImages;
-};
-
-const updateImagesDB = async (
-  userId: number,
-  images: Images["mediaItems"] = []
-) => {
-  try {
-    const newImages = await identifyNewImages(userId, images);
-    if (!!newImages.length) {
-      await prisma.images.createMany({
-        data: newImages.map((image) => ({
-          googleId: image.id,
-          userId,
-          created_at: image.mediaMetadata.creationTime,
-          width: Number(image.mediaMetadata.width),
-          height: Number(image.mediaMetadata.height),
-        })),
-      });
-    }
-  } catch (err) {
-    console.error("DB update error", err);
-    updateImagesDB(userId, images); //restart?
-  }
-};
 
 export const handleGetImages = async <
   ImageResponseType = MediaItemResultsImages | Images
@@ -87,13 +42,9 @@ export const handleGetImages = async <
   return await res.json<ImageResponseType>();
 };
 
-/**
- * Initial load of all images
- */
 export const initialImageLoad = async (access_token: string) => {
+  let images: Images["mediaItems"] = [];
   try {
-    const { id: userId } = await getUserData(access_token);
-
     const fetchAllImages = async (pageToken?: string) => {
       const bodyParams = baseBodyParams({
         ...(pageToken && {
@@ -108,7 +59,8 @@ export const initialImageLoad = async (access_token: string) => {
           bodyParams,
         },
       });
-      await updateImagesDB(userId, data.mediaItems);
+
+      images.push(...data.mediaItems);
 
       if (data.nextPageToken) {
         console.count("fetching next page");
@@ -119,105 +71,51 @@ export const initialImageLoad = async (access_token: string) => {
       }
     };
     await fetchAllImages();
+    return images;
   } catch (err) {
     console.error("INITIAL LOAD", err);
+    throw err;
   }
 };
 
-const getNewestImages = async (access_token: string) => {
+// need to loop this for each of the next pages too
+export const getNewestImages = async (
+  access_token: string,
+  images_last_updated_at: Date
+) => {
+  const currentDate = new Date();
   try {
-    const user = await getUserData(access_token);
-    if (user.images_last_updated_at) {
-      const lastUpdated = new Date(user.images_last_updated_at);
-      const filters: Filters = {
-        dateFilter: {
-          ranges: [
-            {
-              endDate: {
-                day: currentDate.getDate(),
-                month: currentDate.getMonth() + 1, // month starts from 0
-                year: currentDate.getFullYear(),
-              },
-              startDate: {
-                day: lastUpdated.getDate(),
-                month: lastUpdated.getMonth() + 1,
-                year: lastUpdated.getFullYear(),
-              },
-            },
-          ],
-        },
-      };
-
-      const bodyParams = baseBodyParams({ filters });
-      const data = await handleGetImages<Images>({
-        access_token,
-        options: {
-          method: ":search",
-          bodyParams,
-        },
-      });
-      await updateImagesDB(user.id, data.mediaItems);
-    }
-  } catch (err) {
-    console.error("NEWEST IMAGES", err);
-  }
-};
-
-const updateImages = async (access_token: string) => {
-  const user = await getUserData(access_token);
-  if (!user.images_last_updated_at) {
-    // grab all images
-    initialImageLoad(access_token);
-  } else if (
-    new Date(user.images_last_updated_at).toString() <
-    currentDate.toDateString()
-  ) {
-    // update with newest images
-    getNewestImages(access_token);
-  }
-};
-
-const selectImages = async (userId: number) => {
-  const sql = Prisma.sql`
-    SELECT * FROM "Images" WHERE "userId" = ${userId}
-    AND EXTRACT(MONTH FROM "created_at") = EXTRACT(MONTH FROM CURRENT_DATE)
-    AND EXTRACT(DAY FROM "created_at") = EXTRACT(DAY FROM CURRENT_DATE);`;
-
-  return await prisma.$queryRaw<SchemaImages[]>(sql);
-};
-
-export const getDayAndMonthImages = async (access_token: string) => {
-  try {
-    // Need to think about where this should go and when to trigger it
-    // updateImages(access_token);
-
-    const user = await getUserData(access_token);
-
+    const lastUpdated = new Date(images_last_updated_at);
     const filters: Filters = {
       dateFilter: {
-        dates: [
+        ranges: [
           {
-            year: 0,
-            day: currentDate.getDate(),
-            month: currentDate.getMonth() + 1, // month starts from 0
+            endDate: {
+              day: currentDate.getDate(),
+              month: currentDate.getMonth() + 1, // month starts from 0
+              year: currentDate.getFullYear(),
+            },
+            startDate: {
+              day: lastUpdated.getDate(),
+              month: lastUpdated.getMonth() + 1,
+              year: lastUpdated.getFullYear(),
+            },
           },
         ],
       },
     };
 
+    const bodyParams = baseBodyParams({ filters });
     const data = await handleGetImages<Images>({
       access_token,
       options: {
         method: ":search",
-        bodyParams: baseBodyParams({ filters }),
+        bodyParams,
       },
     });
-
-    await updateImagesDB(user.id, data.mediaItems);
-
-    return await selectImages(user.id);
+    return data.mediaItems;
   } catch (err) {
-    console.error("ERROR", err);
-    return [];
+    console.error("NEWEST IMAGES", err);
+    throw err;
   }
 };

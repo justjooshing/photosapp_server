@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import { CONFIG } from "../../config/index.ts";
 import { Request } from "express";
 import { oauth2Client } from "../login.ts";
@@ -12,14 +11,6 @@ export const getTokenFromHeader = (req: Request) => {
     }
   }
   throw new Error("No token");
-};
-
-export const checkJWT = (req: Request): string => {
-  const token = getTokenFromHeader(req);
-  const verifiedToken = jwt.verify(token, CONFIG.JWTsecret, {
-    complete: false,
-  }) as string;
-  return verifiedToken;
 };
 
 export const generateAccessToken = async (code: string) => {
