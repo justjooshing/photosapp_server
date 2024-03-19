@@ -26,6 +26,10 @@ export const images = (app: Router) => {
 
   route.get(
     "/",
+    (req, res, next) => {
+      console.log(req.originalUrl);
+      next();
+    },
     getDayAndMonthImages,
     updateImagesDB,
     selectDayAndMonthImages,

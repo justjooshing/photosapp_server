@@ -1,17 +1,23 @@
 import { NextFunction, Request, Response } from "express";
 import {
   baseBodyParams,
-  getNewestImages,
   handleGetImages,
-  initialImageLoad,
+  loadImageSet,
 } from "../../../services/images/images.ts";
 import {
-  Filters,
   Images,
   MediaItemResultsImages,
 } from "../../../services/images/types.ts";
 import { Prisma, Images as SchemaImages } from "@prisma/client";
 import { prisma } from "../../../loaders/prisma.ts";
+import { newestImagesFilter, todayFilter } from "../../helpers/filters.ts";
+
+type imageType = "today" | "similar";
+const filterType = (type: imageType = "today") =>
+  ({
+    today: todayFilter(),
+    similar: todayFilter(),
+  }[type]);
 
 export const getDayAndMonthImages = async (
   req: Request,
@@ -19,31 +25,17 @@ export const getDayAndMonthImages = async (
   next: NextFunction
 ) => {
   try {
+    const type = req.query.type as imageType;
     const { access_token } = req.locals;
+    console.log({ type });
 
-    const currentDate = new Date();
-
-    const filters: Filters = {
-      dateFilter: {
-        dates: [
-          {
-            year: 0,
-            day: currentDate.getDate(),
-            month: currentDate.getMonth() + 1, // month starts from 0
-          },
-        ],
-      },
-    };
-
-    const data = await handleGetImages<Images>({
+    const filters = filterType(type);
+    const data = await loadImageSet({
       access_token,
-      options: {
-        method: ":search",
-        bodyParams: baseBodyParams({ filters }),
-      },
+      bodyParams: baseBodyParams({ filters }),
     });
 
-    req.locals.newImages = data.mediaItems;
+    req.locals.newImages = data;
     next();
   } catch (err) {
     console.error("ERROR", err);
@@ -126,6 +118,16 @@ export const updateImagesDB = async (
       });
       console.log("db updated");
     }
+    // Update last updated
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        images_last_updated_at: new Date(),
+      },
+    });
+
     next();
   } catch (err) {
     console.error("DB update error", err);
@@ -133,6 +135,10 @@ export const updateImagesDB = async (
   }
 };
 
+/**
+ * fetches either all the images if a new user
+ * or latest from last_updated_at date
+ */
 export const fetchLatestImages = async (
   req: Request,
   res: Response,
@@ -142,36 +148,35 @@ export const fetchLatestImages = async (
 
   const {
     access_token,
-    appUser: { images_last_updated_at, id },
+    appUser: { images_last_updated_at },
   } = req.locals;
-
-  const updateLastUpdated = async () => {
-    await prisma.user.update({
-      where: {
-        id,
-      },
-      data: {
-        images_last_updated_at: new Date(),
-      },
-    });
-  };
-
   try {
-    if (!images_last_updated_at) {
-      const newImages = await initialImageLoad(access_token);
-      req.locals.newImages = newImages;
-      console.log("initial images fetched");
-      await updateLastUpdated();
-    } else if (
-      images_last_updated_at.toDateString() < currentDate.toDateString()
-    ) {
-      const newImages = await getNewestImages(
-        access_token,
-        images_last_updated_at
-      );
-      req.locals.newImages = newImages;
-      console.log("newest images fetched");
-      await updateLastUpdated();
+    const bodyParams = (() => {
+      if (!images_last_updated_at) {
+        return {};
+      } else if (
+        images_last_updated_at.toDateString() < currentDate.toDateString()
+      ) {
+        const lastUpdated = new Date(images_last_updated_at);
+
+        return baseBodyParams({
+          filters: newestImagesFilter(lastUpdated),
+        });
+      }
+      return undefined;
+    })();
+
+    if (!!bodyParams) {
+      try {
+        const newImages = await loadImageSet({ access_token, bodyParams });
+        req.locals.newImages = newImages;
+        console.log(
+          `${!!bodyParams.filters ? "new" : "initial"} images fetched`
+        );
+      } catch (err) {
+        console.error(`${!!bodyParams.filters ? "new" : "initial"} load`, err);
+        throw err;
+      }
     }
 
     next();
@@ -181,10 +186,26 @@ export const fetchLatestImages = async (
   }
 };
 
-const prismaRawSql = async <SchemaType>(sqlQuery: Prisma.Sql) => {
-  const sql = Prisma.sql`${sqlQuery}`;
-  return await prisma.$queryRaw<SchemaType>(sql);
-};
+const prismaRawSql = async <SchemaType>(sqlQuery: Prisma.Sql) =>
+  await prisma.$queryRaw<SchemaType>(sqlQuery);
+
+// AND 'deleted_at' IS NULL
+// AND 'sorted_at' IS NULL
+
+const todayQuery = (
+  userId: number
+) => Prisma.sql`SELECT * FROM "Images" WHERE "userId" = ${userId} 
+AND EXTRACT(MONTH FROM "created_at") = EXTRACT(MONTH FROM CURRENT_DATE) 
+AND EXTRACT(DAY FROM "created_at") = EXTRACT(DAY FROM CURRENT_DATE)`;
+
+const similar = (userId: number) =>
+  Prisma.sql`SELECT * FROM 'Images' WHERE 'userId' = ${userId}`;
+
+const queryByType = (type: "today" | "similar", userId: number) =>
+  ({
+    today: todayQuery(userId),
+    similar: similar(userId),
+  }[type]);
 
 export const selectDayAndMonthImages = async (
   req: Request,
@@ -195,11 +216,7 @@ export const selectDayAndMonthImages = async (
     appUser: { id: userId },
   } = req.locals;
 
-  // AND 'deleted_at' IS NULL
-  // AND 'sorted_at' IS NULL
-  const query = Prisma.sql`SELECT * FROM "Images" WHERE "userId" = ${userId}
-  AND EXTRACT(MONTH FROM "created_at") = EXTRACT(MONTH FROM CURRENT_DATE)
-  AND EXTRACT(DAY FROM "created_at") = EXTRACT(DAY FROM CURRENT_DATE)`;
+  const query = queryByType("today", userId);
   const data = await prismaRawSql<SchemaImages[]>(query);
   req.locals.selectedImages = data;
   next();
