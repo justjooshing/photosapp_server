@@ -1,10 +1,9 @@
 import { Router } from "express";
 import {
   addFreshBaseUrls,
-  getDayAndMonthImages,
   fetchLatestImages,
   handleSortOrDeletePhotos,
-  selectDayAndMonthImages,
+  selectImagesByType,
   shapeImagesResponse,
   updateImagesDB,
 } from "../middlewares/images/images.ts";
@@ -30,11 +29,10 @@ export const images = (app: Router) => {
       console.log(req.originalUrl);
       next();
     },
-    getDayAndMonthImages,
-    updateImagesDB,
-    selectDayAndMonthImages,
+    selectImagesByType,
     addFreshBaseUrls,
     shapeImagesResponse
   );
+
   route.post("/", handleSortOrDeletePhotos);
 };

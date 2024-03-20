@@ -66,7 +66,9 @@ export const loadImageSet = async ({
         },
       });
 
-      images.push(...data.mediaItems);
+      if (data.mediaItems) {
+        images.push(...data.mediaItems);
+      }
 
       if (data.nextPageToken) {
         console.count("fetching next page");

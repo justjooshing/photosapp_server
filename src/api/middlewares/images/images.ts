@@ -10,38 +10,7 @@ import {
 } from "../../../services/images/types.ts";
 import { Prisma, Images as SchemaImages } from "@prisma/client";
 import { prisma } from "../../../loaders/prisma.ts";
-import { newestImagesFilter, todayFilter } from "../../helpers/filters.ts";
-
-type imageType = "today" | "similar";
-const filterType = (type: imageType = "today") =>
-  ({
-    today: todayFilter(),
-    similar: todayFilter(),
-  }[type]);
-
-export const getDayAndMonthImages = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const type = req.query.type as imageType;
-    const { access_token } = req.locals;
-    console.log({ type });
-
-    const filters = filterType(type);
-    const data = await loadImageSet({
-      access_token,
-      bodyParams: baseBodyParams({ filters }),
-    });
-
-    req.locals.newImages = data;
-    next();
-  } catch (err) {
-    console.error("ERROR", err);
-    return [];
-  }
-};
+import { newestImagesFilter } from "../../helpers/filters.ts";
 
 export const shapeImagesResponse = (req: Request, res: Response) => {
   try {
@@ -61,12 +30,31 @@ export const shapeImagesResponse = (req: Request, res: Response) => {
   }
 };
 
-export const handleSortOrDeletePhotos = (req: Request, res: Response) => {
+export const handleSortOrDeletePhotos = async (req: Request, res: Response) => {
   // update to
   // - add to google photos folder
   // - update db to be deleted_at or sorted_at [date]
   try {
     if (!!req.body?.image) {
+      const { choice, image } = req.body;
+      console.log(choice, image);
+      const decision = (() => {
+        if (choice === "keep") {
+          return { sorted_at: new Date() };
+        } else if (choice === "delete") {
+          return { deleted_at: new Date() };
+        } else return undefined;
+      })();
+
+      if (!!decision) {
+        const data = await prisma.images.update({
+          where: {
+            id: image.id,
+          },
+          data: decision,
+        });
+        console.log(data);
+      }
       res.status(201).json({});
     } else res.status(400).send(new Error("Missing image information"));
   } catch (err) {
@@ -169,7 +157,9 @@ export const fetchLatestImages = async (
     if (!!bodyParams) {
       try {
         const newImages = await loadImageSet({ access_token, bodyParams });
-        req.locals.newImages = newImages;
+        const currentNewImages = req.locals.newImages || [];
+        req.locals.newImages = [...currentNewImages, ...newImages];
+
         console.log(
           `${!!bodyParams.filters ? "new" : "initial"} images fetched`
         );
@@ -189,17 +179,20 @@ export const fetchLatestImages = async (
 const prismaRawSql = async <SchemaType>(sqlQuery: Prisma.Sql) =>
   await prisma.$queryRaw<SchemaType>(sqlQuery);
 
-// AND 'deleted_at' IS NULL
-// AND 'sorted_at' IS NULL
-
 const todayQuery = (
   userId: number
 ) => Prisma.sql`SELECT * FROM "Images" WHERE "userId" = ${userId} 
-AND EXTRACT(MONTH FROM "created_at") = EXTRACT(MONTH FROM CURRENT_DATE) 
-AND EXTRACT(DAY FROM "created_at") = EXTRACT(DAY FROM CURRENT_DATE)`;
+AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE) 
+AND EXTRACT(DAY FROM created_at) = EXTRACT(DAY FROM CURRENT_DATE)
+AND deleted_at IS NULL
+AND sorted_at IS NULL
+LIMIT 5`;
 
 const similar = (userId: number) =>
-  Prisma.sql`SELECT * FROM 'Images' WHERE 'userId' = ${userId}`;
+  Prisma.sql`SELECT * FROM "Images" WHERE "userId" = ${userId}
+  AND deleted_at IS NULL
+  AND sorted_at IS NULL
+  LIMIT 5`;
 
 const queryByType = (type: "today" | "similar", userId: number) =>
   ({
@@ -207,7 +200,7 @@ const queryByType = (type: "today" | "similar", userId: number) =>
     similar: similar(userId),
   }[type]);
 
-export const selectDayAndMonthImages = async (
+export const selectImagesByType = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -216,7 +209,10 @@ export const selectDayAndMonthImages = async (
     appUser: { id: userId },
   } = req.locals;
 
-  const query = queryByType("today", userId);
+  type imageType = "today" | "similar";
+  const type = req.query.type as imageType;
+
+  const query = queryByType(type, userId);
   const data = await prismaRawSql<SchemaImages[]>(query);
   req.locals.selectedImages = data;
   next();
@@ -227,42 +223,52 @@ export type WithPhotoUrl = SchemaImages & { photoUrl: string };
 
 export const addFreshBaseUrls = async (
   req: Request,
-  _: Response,
+  res: Response,
   next: NextFunction
 ) => {
-  const { access_token, selectedImages: images } = req.locals;
-  const mediaItemIds = new URLSearchParams();
-  for (const image of images) {
-    mediaItemIds.append("mediaItemIds", image.googleId);
-  }
+  console.log("adding fresh baseURLs");
+  try {
+    const { access_token, selectedImages: images } = req.locals;
 
-  // The image might not exist anymore, so potentially delete DB entry on specific error?
-  const data = await handleGetImages<MediaItemResultsImages>({
-    access_token,
-    options: {
-      method: ":batchGet",
-      searchParams: mediaItemIds,
-    },
-  });
-
-  const updatedImages = images.reduce(
-    // Find existing image and add photoUrl id onto it
-    (accImages: WithPhotoUrl[], currImage) => {
-      const matchingImage = data.mediaItemResults.find((i) => {
-        if ("mediaItem" in i) return i.mediaItem.id === currImage.googleId;
-      });
-      if (matchingImage && "mediaItem" in matchingImage) {
-        accImages.push({
-          ...currImage,
-          photoUrl: matchingImage.mediaItem.baseUrl,
-        });
+    if (!!images.length) {
+      const mediaItemIds = new URLSearchParams();
+      for (const image of images) {
+        mediaItemIds.append("mediaItemIds", image.googleId);
       }
-      return accImages;
-    },
-    []
-  );
+      // The image might not exist anymore, so potentially delete DB entry on specific error?
+      const data = await handleGetImages<MediaItemResultsImages>({
+        access_token,
+        options: {
+          method: ":batchGet",
+          searchParams: mediaItemIds,
+        },
+      });
 
-  // Updated with productUrl
-  req.locals.selectedImages = updatedImages;
-  next();
+      const updatedImages = images.reduce(
+        // Find existing image and add photoUrl id onto it
+        (accImages: WithPhotoUrl[], currImage) => {
+          const matchingImage = data.mediaItemResults.find((i) => {
+            if ("mediaItem" in i) return i.mediaItem.id === currImage.googleId;
+          });
+          if (matchingImage && "mediaItem" in matchingImage) {
+            accImages.push({
+              ...currImage,
+              photoUrl: matchingImage.mediaItem.baseUrl,
+            });
+          }
+          return accImages;
+        },
+        []
+      );
+
+      // Updated with productUrl
+      req.locals.selectedImages = updatedImages;
+    } else {
+      req.locals.selectedImages = [];
+    }
+    next();
+  } catch (err) {
+    console.error(err);
+    res.send(err);
+  }
 };
