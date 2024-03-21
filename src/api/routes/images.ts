@@ -11,6 +11,7 @@ import {
 import { getUserData, updateUsersDB } from "../middlewares/user/user.ts";
 import { checkJWT } from "../middlewares/auth/auth.ts";
 import { returnAlbumsWithFirstImages } from "../middlewares/albums/albums.ts";
+import { prisma } from "../../loaders/prisma.ts";
 
 const route = Router();
 
@@ -36,7 +37,27 @@ export const images = (app: Router) => {
     // get specific album + all images
   });
 
-  route.get("/count", () => {
-    // send back count
+  route.get("/count", async (req, res, next) => {
+    const {
+      appUser: { id: userId },
+    } = req.locals;
+    const deletedCount = await prisma.images.count({
+      where: {
+        userId,
+        deleted_at: {
+          not: null,
+        },
+      },
+    });
+    const sortedCount = await prisma.images.count({
+      where: {
+        userId,
+        sorted_at: {
+          not: null,
+        },
+      },
+    });
+
+    res.send({ deletedCount, sortedCount });
   });
 };
