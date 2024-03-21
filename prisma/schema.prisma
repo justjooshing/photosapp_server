@@ -19,18 +19,30 @@ model User {
   googleId               String    @unique
   googleProfilePicture   String    @unique
   created_at             DateTime? @default(now())
-  images_last_updated_at DateTime? @default(now())
+  images_last_updated_at DateTime?
   Images                 Images[]
+  Album                  Album[]
 }
 
 model Images {
+  id               Int       @id @default(autoincrement())
+  googleId         String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+  userId           Int
+  created_at       DateTime
+  deleted_at       DateTime?
+  sorted_at        DateTime?
+  album            Album?    @relation(fields: [deleted_album_id], references: [id])
+  deleted_album_id Int?
+  width            Int
+  height           Int
+}
+
+model Album {
   id         Int       @id @default(autoincrement())
-  googleId   String    @unique
   user       User      @relation(fields: [userId], references: [id])
   userId     Int
-  created_at DateTime
-  deleted_at DateTime?
-  sorted_at  DateTime?
-  width      Int
-  height     Int
+  created_at DateTime? @default(now())
+  title      String    @unique
+  Images     Images[]
 }
