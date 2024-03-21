@@ -3,13 +3,19 @@ import { UserData } from "../services/user/types.ts";
 import { User } from "@prisma/client";
 import { Images } from "../services/images/types.ts";
 import { Images as SchemaImages, Album as SchemaAlbum } from "@prisma/client";
+import { WithPhotoUrl } from "./middlewares/images/types.ts";
+
+export type WithPhotoUrl = SchemaImages & {
+  baseUrl: string;
+  productUrl: string;
+};
 
 interface MiddlewareProps {
   access_token: string;
   user: UserData;
   appUser: User;
   newImages: Images["mediaItems"];
-  selectedImages: (SchemaImages & { baseUrl?: string; productUrl?: string })[];
+  selectedImages: WithPhotoUrl[];
   currentAlbum: SchemaAlbum;
 }
 

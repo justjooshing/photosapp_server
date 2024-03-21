@@ -10,6 +10,7 @@ import {
 } from "../middlewares/images/images.ts";
 import { getUserData, updateUsersDB } from "../middlewares/user/user.ts";
 import { checkJWT } from "../middlewares/auth/auth.ts";
+import { returnAlbumsWithFirstImages } from "../middlewares/albums/albums.ts";
 
 const route = Router();
 
@@ -24,16 +25,18 @@ export const images = (app: Router) => {
     updateImagesDB
   );
 
-  route.get(
-    "/",
-    (req, res, next) => {
-      console.log(req.originalUrl);
-      next();
-    },
-    selectImagesByType,
-    addFreshBaseUrls,
-    shapeImagesResponse
-  );
+  route.get("/", selectImagesByType, (req, res) => {
+    const { selectedImages } = req.locals;
+    res.json({ imageUrls: selectedImages });
+  });
 
   route.post("/", appendCurrentAlbum, handleSortOrDeletePhotos);
+  route.get("/albums", returnAlbumsWithFirstImages);
+  route.get("/albums/:albumId", () => {
+    // get specific album + all images
+  });
+
+  route.get("/count", () => {
+    // send back count
+  });
 };

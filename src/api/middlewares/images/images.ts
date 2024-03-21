@@ -12,24 +12,23 @@ import {
 import { Prisma, Images as SchemaImages } from "@prisma/client";
 import { prisma } from "../../../loaders/prisma.ts";
 import { newestImagesFilter } from "../../helpers/filters.ts";
+import { WithPhotoUrl } from "../../types.js";
 
-export const shapeImagesResponse = (req: Request, res: Response) => {
-  try {
-    const { selectedImages } = req.locals;
-
-    const imageUrls = selectedImages.map(({ baseUrl, id, height, width }) => ({
-      source: baseUrl,
-      id,
-      height,
-      width,
-    }));
-
-    res.json({ imageUrls });
-  } catch (err) {
-    console.log("get error", err);
-    res.cookie("jwt", undefined).status(403).json(err);
-  }
-};
+export const shapeImagesResponse = ({
+  baseUrl,
+  productUrl,
+  id,
+  height,
+  width,
+  deleted_album_id,
+}: WithPhotoUrl) => ({
+  deleted_album_id,
+  baseUrl,
+  productUrl,
+  id,
+  height,
+  width,
+});
 
 export const appendCurrentAlbum = async (
   req: Request,
@@ -233,6 +232,7 @@ export const selectImagesByType = async (
   next: NextFunction
 ) => {
   const {
+    access_token,
     appUser: { id: userId },
   } = req.locals;
 
@@ -240,26 +240,19 @@ export const selectImagesByType = async (
   const type = req.query.type as imageType;
 
   const query = queryByType(type, userId);
-  const data = await prismaRawSql<SchemaImages[]>(query);
-  req.locals.selectedImages = data;
+  const images = await prismaRawSql<SchemaImages[]>(query);
+  const withUrls = await addFreshBaseUrls(access_token, images);
+  req.locals.selectedImages = withUrls;
   next();
 };
 
 // Super annoying having to refetch the image urls again
-export type WithPhotoUrl = SchemaImages & {
-  baseUrl: string;
-  productUrl: string;
-};
-
 export const addFreshBaseUrls = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
+  access_token: string,
+  images: SchemaImages[]
 ) => {
   console.log("adding fresh baseURLs");
   try {
-    const { access_token, selectedImages: images } = req.locals;
-
     if (!!images.length) {
       const mediaItemIds = new URLSearchParams();
       for (const image of images) {
@@ -291,15 +284,14 @@ export const addFreshBaseUrls = async (
         },
         []
       );
-
+      const shapedImages = updatedImages.map(shapeImagesResponse);
       // Updated with productUrl
-      req.locals.selectedImages = updatedImages;
+      return shapedImages;
     } else {
-      req.locals.selectedImages = [];
+      return [];
     }
-    next();
   } catch (err) {
     console.error(err);
-    res.send(err);
+    return [];
   }
 };
