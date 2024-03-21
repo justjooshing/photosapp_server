@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   addFreshBaseUrls,
+  appendCurrentAlbum,
   fetchLatestImages,
   handleSortOrDeletePhotos,
   selectImagesByType,
@@ -34,5 +35,5 @@ export const images = (app: Router) => {
     shapeImagesResponse
   );
 
-  route.post("/", handleSortOrDeletePhotos);
+  route.post("/", appendCurrentAlbum, handleSortOrDeletePhotos);
 };

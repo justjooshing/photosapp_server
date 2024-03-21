@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import {
   baseBodyParams,
+  createAlbum,
   handleGetImages,
   loadImageSet,
 } from "../../../services/images/images.ts";
@@ -16,8 +17,8 @@ export const shapeImagesResponse = (req: Request, res: Response) => {
   try {
     const { selectedImages } = req.locals;
 
-    const imageUrls = selectedImages.map(({ photoUrl, id, height, width }) => ({
-      source: photoUrl,
+    const imageUrls = selectedImages.map(({ baseUrl, id, height, width }) => ({
+      source: baseUrl,
       id,
       height,
       width,
@@ -30,14 +31,37 @@ export const shapeImagesResponse = (req: Request, res: Response) => {
   }
 };
 
+export const appendCurrentAlbum = async (
+  req: Request,
+  _: Response,
+  next: NextFunction
+) => {
+  const {
+    appUser: { id: userId },
+  } = req.locals;
+
+  const currentDate = new Date().toDateString();
+  const albumTitle = `PhotosApp: ${currentDate}`;
+  const existingAlbum = await prisma.album.findUnique({
+    where: {
+      title: albumTitle,
+    },
+  });
+
+  if (existingAlbum) {
+    req.locals.currentAlbum = existingAlbum;
+  } else {
+    const newAlbum = await createAlbum(userId, albumTitle);
+    req.locals.currentAlbum = newAlbum;
+  }
+  next();
+};
+
 export const handleSortOrDeletePhotos = async (req: Request, res: Response) => {
-  // update to
-  // - add to google photos folder
-  // - update db to be deleted_at or sorted_at [date]
   try {
     if (!!req.body?.image) {
       const { choice, image } = req.body;
-      console.log(choice, image);
+
       const decision = (() => {
         if (choice === "keep") {
           return { sorted_at: new Date() };
@@ -47,13 +71,16 @@ export const handleSortOrDeletePhotos = async (req: Request, res: Response) => {
       })();
 
       if (!!decision) {
-        const data = await prisma.images.update({
+        const { currentAlbum } = req.locals;
+        await prisma.images.update({
           where: {
             id: image.id,
           },
-          data: decision,
+          data: {
+            ...decision,
+            deleted_album_id: currentAlbum.id,
+          },
         });
-        console.log(data);
       }
       res.status(201).json({});
     } else res.status(400).send(new Error("Missing image information"));
@@ -219,7 +246,10 @@ export const selectImagesByType = async (
 };
 
 // Super annoying having to refetch the image urls again
-export type WithPhotoUrl = SchemaImages & { photoUrl: string };
+export type WithPhotoUrl = SchemaImages & {
+  baseUrl: string;
+  productUrl: string;
+};
 
 export const addFreshBaseUrls = async (
   req: Request,
@@ -245,7 +275,7 @@ export const addFreshBaseUrls = async (
       });
 
       const updatedImages = images.reduce(
-        // Find existing image and add photoUrl id onto it
+        // Find existing image and add baseUrl id onto it
         (accImages: WithPhotoUrl[], currImage) => {
           const matchingImage = data.mediaItemResults.find((i) => {
             if ("mediaItem" in i) return i.mediaItem.id === currImage.googleId;
@@ -253,7 +283,8 @@ export const addFreshBaseUrls = async (
           if (matchingImage && "mediaItem" in matchingImage) {
             accImages.push({
               ...currImage,
-              photoUrl: matchingImage.mediaItem.baseUrl,
+              baseUrl: matchingImage.mediaItem.baseUrl,
+              productUrl: matchingImage.mediaItem.productUrl,
             });
           }
           return accImages;

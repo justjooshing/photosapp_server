@@ -5,6 +5,8 @@ import {
   MediaItemResultsImages,
   MediaItemSearch,
 } from "./types.ts";
+import { prisma } from "../../loaders/prisma.ts";
+import { Album as SchemaAlbum } from "@prisma/client";
 
 const endpoint = "https://photoslibrary.googleapis.com/v1/mediaItems";
 
@@ -84,4 +86,18 @@ export const loadImageSet = async ({
     console.error("FETCH ALL", err);
     throw err;
   }
+};
+
+export const createAlbum = async (
+  userId: number,
+  albumTitle: string
+): Promise<SchemaAlbum> => {
+  const newAlbum = await prisma.album.create({
+    data: {
+      userId,
+      title: albumTitle,
+    },
+  });
+
+  return newAlbum;
 };
