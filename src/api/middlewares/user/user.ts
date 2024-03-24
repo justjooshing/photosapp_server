@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import ky from "ky";
 import { prisma } from "../../../loaders/prisma.ts";
-import { UserData } from "../../../services/user/types.ts";
+import { UserData } from "../../services/user/types.ts";
 
 export const updateUsersDB = async (
   req: Request,

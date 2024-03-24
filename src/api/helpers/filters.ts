@@ -1,4 +1,4 @@
-import { Filters } from "../../services/images/types.ts";
+import { Filters } from "..//services/images/types.ts";
 
 export const todayFilter = (): Filters => {
   const currentDate = new Date();

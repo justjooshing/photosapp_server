@@ -4,11 +4,11 @@ import {
   createAlbum,
   handleGetImages,
   loadImageSet,
-} from "../../../services/images/images.ts";
+} from "../..//services/images/images.ts";
 import {
   Images,
   MediaItemResultsImages,
-} from "../../../services/images/types.ts";
+} from "../..//services/images/types.ts";
 import { Prisma, Images as SchemaImages } from "@prisma/client";
 import { prisma } from "../../../loaders/prisma.ts";
 import { newestImagesFilter } from "../../helpers/filters.ts";

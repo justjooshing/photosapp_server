@@ -3,7 +3,7 @@ import { CONFIG } from "../../../config/index.ts";
 import {
   generateAccessToken,
   getTokenFromHeader,
-} from "../../../services/auth/auth.ts";
+} from "../..//services/auth/auth.ts";
 import jwt from "jsonwebtoken";
 
 export const checkJWT = (req: Request, res: Response, next: NextFunction) => {
