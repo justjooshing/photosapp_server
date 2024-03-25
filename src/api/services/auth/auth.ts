@@ -1,6 +1,5 @@
-import { CONFIG } from "../../config/index.ts";
 import { Request } from "express";
-import { oauth2Client } from "../login.ts";
+import { CONFIG, oauth2Client } from "../../../config/index.ts";
 
 export const getTokenFromHeader = (req: Request) => {
   const auth = req.header("authorization");

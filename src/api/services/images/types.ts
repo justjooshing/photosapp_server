@@ -1,3 +1,5 @@
+import { Images as SchemaImages } from "@prisma/client";
+
 // https://developers.google.com/photos/library/reference/rest/v1/mediaItems
 interface CameraDetails {
   cameraMake: string;
@@ -143,3 +145,8 @@ export interface HandleGetImages {
         searchParams: URLSearchParams;
       };
 }
+
+export type WithPhotoUrl = SchemaImages & {
+  baseUrl: string;
+  productUrl: string;
+};

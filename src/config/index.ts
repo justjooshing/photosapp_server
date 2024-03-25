@@ -1,4 +1,5 @@
 import * as dotenv from "dotenv";
+import { google } from "googleapis";
 dotenv.config();
 
 const port = 8080;
@@ -31,3 +32,9 @@ export const CONFIG = {
     ],
   },
 };
+
+export const oauth2Client = new google.auth.OAuth2({
+  clientId: CONFIG.oauth2Credentials.client_id,
+  redirectUri: CONFIG.oauth2Credentials.redirect_uris[0],
+  clientSecret: CONFIG.oauth2Credentials.client_secret,
+});
