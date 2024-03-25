@@ -18,7 +18,7 @@ export const loadImageSet = async ({
   access_token,
   bodyParams,
 }: LoadImagesParams) => {
-  let images: Images["mediaItems"] = [];
+  const images: Images["mediaItems"] = [];
   try {
     const fetchAllImages = async (pageToken?: string) => {
       const data = await handleGetImages<Images>({
@@ -77,14 +77,14 @@ export const updateNewestImages = async (
     return undefined;
   })();
 
-  if (!!bodyParams) {
+  if (bodyParams) {
     try {
       const newImages = await loadImageSet({ access_token, bodyParams });
 
       await updateImagesDB(appUserId, newImages);
-      console.log(`${!!bodyParams.filters ? "new" : "initial"} images fetched`);
+      console.log(`${bodyParams.filters ? "new" : "initial"} images fetched`);
     } catch (err) {
-      console.error(`${!!bodyParams.filters ? "new" : "initial"} load`, err);
+      console.error(`${bodyParams.filters ? "new" : "initial"} load`, err);
       throw err;
     }
   }
@@ -112,7 +112,7 @@ const identifyNewImages = async (
 const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
   try {
     const newImages = await identifyNewImages(userId, images);
-    if (!!newImages.length) {
+    if (newImages.length) {
       await prisma.images.createMany({
         data: newImages.map((image) => ({
           googleId: image.id,
@@ -138,7 +138,7 @@ export const addFreshBaseUrls = async (
 ) => {
   console.log("adding fresh baseURLs");
   try {
-    if (!!images.length) {
+    if (images.length) {
       const mediaItemIds = new URLSearchParams();
       for (const image of images) {
         mediaItemIds.append("mediaItemIds", image.googleId);

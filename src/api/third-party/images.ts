@@ -26,7 +26,7 @@ export const handleGetImages = async <
       Authorization: `Bearer ${access_token}`,
     },
   });
-  let method: "get" | "post" = options.method === ":search" ? "post" : "get";
+  const method = options.method === ":search" ? "post" : "get";
 
   const res = await client[method](`${endpoint}${options.method}`, {
     ...(options.method === ":search" && { json: options.bodyParams }),

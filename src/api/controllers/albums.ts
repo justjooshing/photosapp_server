@@ -21,7 +21,7 @@ export const AlbumController = Object.freeze({
 
       const firstImages = await findFirstImagesOfAlbums(albums);
 
-      if (!!firstImages.size) {
+      if (firstImages.size) {
         const data = await appendImagesWithFreshUrls(
           access_token,
           firstImages,
