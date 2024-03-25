@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { CONFIG, oauth2Client } from "../../config/index.ts";
 import jwt from "jsonwebtoken";
 import { findOrCreateUser } from "../services/user/user.ts";
-import { updateImages } from "../services/images/images.ts";
+import { updateNewestImages } from "../services/images/images.ts";
 import { getGoogleUser } from "../third-party/user.ts";
 import { generateAccessToken } from "../third-party/auth.ts";
 
@@ -31,7 +31,7 @@ export const AuthController = Object.freeze({
       if (access_token) {
         const user = await getGoogleUser(access_token);
         const appUser = await findOrCreateUser(user);
-        updateImages(access_token, appUser);
+        updateNewestImages(access_token, appUser);
         res.cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret));
         res.redirect(CONFIG.clientUrl);
       }

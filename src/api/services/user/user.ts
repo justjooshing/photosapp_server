@@ -1,4 +1,3 @@
-import ky from "ky";
 import { UserData } from "./types.ts";
 import { prisma } from "../../../loaders/prisma.ts";
 import { User } from "@prisma/client";
@@ -31,4 +30,16 @@ export const findOrCreateUser = async (user: UserData): Promise<User> => {
     appUser = await createNewUser(user);
   }
   return appUser;
+};
+
+export const updateUserLastUpdate = async (userId: number) => {
+  // Update last updated
+  await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      images_last_updated_at: new Date(),
+    },
+  });
 };

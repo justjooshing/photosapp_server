@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import {
-  appendImagesWithFreshestUrls,
+  appendImagesWithFreshUrls,
   findAlbums,
   findFirstImagesOfAlbums,
 } from "../services/albums/albums.ts";
@@ -22,7 +22,7 @@ export const AlbumController = Object.freeze({
       const firstImages = await findFirstImagesOfAlbums(albums);
 
       if (!!firstImages.size) {
-        const data = await appendImagesWithFreshestUrls(
+        const data = await appendImagesWithFreshUrls(
           access_token,
           firstImages,
           albums

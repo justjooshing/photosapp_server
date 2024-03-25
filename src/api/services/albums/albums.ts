@@ -1,6 +1,7 @@
 import { Album, Images } from "@prisma/client";
 import { prisma } from "../../../loaders/prisma.ts";
 import { addFreshBaseUrls } from "../images/images.ts";
+import { SchemaAlbum } from "../images/types.ts";
 
 export const findAlbums = async (userId: number) =>
   await prisma.album.findMany({
@@ -26,7 +27,7 @@ export const findFirstImagesOfAlbums = async (albums: Album[]) => {
   return firstImages;
 };
 
-export const appendImagesWithFreshestUrls = async (
+export const appendImagesWithFreshUrls = async (
   access_token: string,
   firstImages: Map<number, Images>,
   albums: Album[]
@@ -46,4 +47,36 @@ export const appendImagesWithFreshestUrls = async (
     };
   });
   return albumsWithPhotoUrls;
+};
+
+export const createAlbum = async (
+  userId: number,
+  albumTitle: string
+): Promise<SchemaAlbum> => {
+  const newAlbum = await prisma.album.create({
+    data: {
+      userId,
+      title: albumTitle,
+    },
+  });
+
+  return newAlbum;
+};
+
+export const addCurrentAlbum = async (userId: number) => {
+  const currentDate = new Date().toDateString();
+  const albumTitle = `PhotosApp: ${currentDate}`;
+  const existingAlbum = await prisma.album.findUnique({
+    where: {
+      title: albumTitle,
+      userId,
+    },
+  });
+
+  if (existingAlbum) {
+    return existingAlbum;
+  } else {
+    const newAlbum = await createAlbum(userId, albumTitle);
+    return newAlbum;
+  }
 };

@@ -1,35 +1,18 @@
-import ky from "ky";
 import {
-  Images,
-  MediaItemResultsImages,
-  MediaItemSearch,
+  ImageType,
+  LoadImagesParams,
+  SchemaImages,
   WithPhotoUrl,
 } from "./types.ts";
-import {
-  Album as SchemaAlbum,
-  User,
-  Images as SchemaImages,
-  Prisma,
-} from "@prisma/client";
-import { newestImagesFilter } from "../../helpers/filters.ts";
+import { newestImagesFilter } from "../../third-party/filters.ts";
 import { prisma } from "../../../loaders/prisma.ts";
-import { handleGetImages } from "../../third-party/images.ts";
-
-export const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
-  pageSize: 100,
-  filters: {
-    mediaTypeFilter: {
-      mediaTypes: "PHOTO",
-    },
-    includeArchivedMedia: true,
-  },
-  ...options,
-});
-
-interface LoadImagesParams {
-  access_token: string;
-  bodyParams?: MediaItemSearch;
-}
+import { baseBodyParams, handleGetImages } from "../../third-party/images.ts";
+import { User } from "@prisma/client";
+import { MediaItemResultsImages, Images } from "../../third-party/types.ts";
+import { addCurrentAlbum } from "../albums/albums.ts";
+import { queryByImageType } from "./queries.ts";
+import { prismaRawSql } from "../../utils/index.ts";
+import { updateUserLastUpdate } from "../user/user.ts";
 
 export const loadImageSet = async ({
   access_token,
@@ -71,21 +54,10 @@ export const loadImageSet = async ({
   }
 };
 
-export const createAlbum = async (
-  userId: number,
-  albumTitle: string
-): Promise<SchemaAlbum> => {
-  const newAlbum = await prisma.album.create({
-    data: {
-      userId,
-      title: albumTitle,
-    },
-  });
-
-  return newAlbum;
-};
-
-export const updateImages = async (access_token: string, appUser: User) => {
+export const updateNewestImages = async (
+  access_token: string,
+  appUser: User
+) => {
   const currentDate = new Date();
 
   const { id: appUserId, images_last_updated_at } = appUser;
@@ -97,11 +69,10 @@ export const updateImages = async (access_token: string, appUser: User) => {
       images_last_updated_at.toDateString() < currentDate.toDateString()
     ) {
       const lastUpdated = new Date(images_last_updated_at);
-
       // Grab newest images
-      return baseBodyParams({
+      return {
         filters: newestImagesFilter(lastUpdated),
-      });
+      };
     }
     return undefined;
   })();
@@ -153,15 +124,7 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
       });
       console.log("db updated");
     }
-    // Update last updated
-    await prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        images_last_updated_at: new Date(),
-      },
-    });
+    await updateUserLastUpdate(userId);
   } catch (err) {
     console.error("DB update error", err);
     updateImagesDB(userId, images); //restart?
@@ -218,54 +181,13 @@ export const addFreshBaseUrls = async (
   }
 };
 
-type ImageType = "today" | "similar";
-
-const prismaRawSql = async <SchemaType>(sqlQuery: Prisma.Sql) =>
-  await prisma.$queryRaw<SchemaType>(sqlQuery);
-
-const todayQuery = (
+export const selectImagesByImageType = async (
+  type: ImageType,
   userId: number
-) => Prisma.sql`SELECT * FROM "Images" WHERE "userId" = ${userId} 
-AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE) 
-AND EXTRACT(DAY FROM created_at) = EXTRACT(DAY FROM CURRENT_DATE)
-AND deleted_at IS NULL
-AND sorted_at IS NULL
-LIMIT 5`;
-
-const similar = (userId: number) =>
-  Prisma.sql`SELECT * FROM "Images" WHERE "userId" = ${userId}
-  AND deleted_at IS NULL
-  AND sorted_at IS NULL
-  LIMIT 5`;
-
-const queryByType = (type: ImageType, userId: number) =>
-  ({
-    today: todayQuery(userId),
-    similar: similar(userId),
-  }[type]);
-
-export const selectImagesByType = async (type: ImageType, userId: number) => {
-  const query = queryByType(type, userId);
+) => {
+  const query = queryByImageType(type, userId);
   const images = await prismaRawSql<SchemaImages[]>(query);
   return images;
-};
-
-const addCurrentAlbum = async (userId: number) => {
-  const currentDate = new Date().toDateString();
-  const albumTitle = `PhotosApp: ${currentDate}`;
-  const existingAlbum = await prisma.album.findUnique({
-    where: {
-      title: albumTitle,
-      userId,
-    },
-  });
-
-  if (existingAlbum) {
-    return existingAlbum;
-  } else {
-    const newAlbum = await createAlbum(userId, albumTitle);
-    return newAlbum;
-  }
 };
 
 export const updateImagesByChoice = async (

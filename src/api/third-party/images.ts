@@ -1,11 +1,19 @@
 import ky from "ky";
-import {
-  MediaItemResultsImages,
-  HandleGetImages,
-  Images,
-} from "../services/images/types.ts";
+import { HandleGetImages } from "../services/images/types.ts";
+import { MediaItemSearch, MediaItemResultsImages, Images } from "./types.ts";
 
 const endpoint = "https://photoslibrary.googleapis.com/v1/mediaItems";
+
+export const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
+  pageSize: 100,
+  filters: {
+    mediaTypeFilter: {
+      mediaTypes: "PHOTO",
+    },
+    includeArchivedMedia: true,
+  },
+  ...options,
+});
 
 export const handleGetImages = async <
   ImageResponseType = MediaItemResultsImages | Images

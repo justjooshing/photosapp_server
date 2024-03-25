@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import {
   addFreshBaseUrls,
-  selectImagesByType,
+  selectImagesByImageType,
   updateImagesByChoice,
 } from "../services/images/images.ts";
 
@@ -13,9 +13,8 @@ export const ImagesController = Object.freeze({
         appUser: { id: userId },
       } = req.locals;
 
-      // Add better guard based on TS ImageType
       if (req.query.type === "today" || req.query.type === "similar") {
-        const images = await selectImagesByType(req.query.type, userId);
+        const images = await selectImagesByImageType(req.query.type, userId);
         const withUrls = await addFreshBaseUrls(access_token, images);
         return res.status(200).json({ imageUrls: withUrls });
       }
