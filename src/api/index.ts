@@ -5,10 +5,10 @@ import { getUserData } from "./middlewares/user/index.ts";
 
 export const routes = () => {
   const app = Router();
-  app.use(checkJWT, getUserData);
-
-  images(app);
   login(app);
+
+  app.use(checkJWT, getUserData);
+  images(app);
   albums(app);
   count(app);
 

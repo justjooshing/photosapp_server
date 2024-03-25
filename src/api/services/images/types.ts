@@ -3,7 +3,6 @@ import {
   Album as SchemaAlbum,
   User as SchemaUser,
 } from "@prisma/client";
-import { UserData } from "../user/types.ts";
 import { MediaItemSearch } from "../../third-party/types.ts";
 export { SchemaImages, SchemaAlbum, SchemaUser };
 
@@ -34,6 +33,5 @@ export type WithPhotoUrl = SchemaImages & {
 
 export interface MiddlewareProps {
   access_token: string;
-  user: UserData;
   appUser: SchemaUser;
 }

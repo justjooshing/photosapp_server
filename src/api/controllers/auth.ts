@@ -7,14 +7,14 @@ import { getGoogleUser } from "../third-party/user.ts";
 import { generateAccessToken } from "../third-party/auth.ts";
 
 export const AuthController = Object.freeze({
-  appLogin: () => {
+  appLogin: (_: Request, res: Response) => {
     const loginLink = oauth2Client.generateAuthUrl({
       access_type: "offline",
       scope: CONFIG.oauth2Credentials.scopes,
       login_hint: "consent",
     });
 
-    return loginLink;
+    res.status(200).json({ loginLink });
   },
   handleGoogleLogin: async (req: Request, res: Response) => {
     const returnToErrorPage = () => {
@@ -22,8 +22,7 @@ export const AuthController = Object.freeze({
       res.redirect(CONFIG.clientUrl);
       return;
     };
-
-    if (req.query.error || req.query.code !== "string") {
+    if (req.query.error || typeof req.query.code !== "string") {
       return returnToErrorPage();
     }
     try {
@@ -36,6 +35,7 @@ export const AuthController = Object.freeze({
         res.redirect(CONFIG.clientUrl);
       }
     } catch (err) {
+      console.error("auth err", err);
       return returnToErrorPage();
     }
   },

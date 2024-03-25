@@ -5,7 +5,7 @@ import cookies from "cookie-parser";
 import { routes } from "../api/index.ts";
 import { CONFIG } from "../config/index.ts";
 import { auth } from "../api/routes/auth.ts";
-import { MiddlewareProps } from "../api/types.js";
+import { MiddlewareProps } from "../api/services/images/types.ts";
 
 export const expressSetup = (app: Express) => {
   app.use(cors());

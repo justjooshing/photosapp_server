@@ -1,6 +1,7 @@
 import { UserData } from "./types.ts";
 import { prisma } from "../../../loaders/prisma.ts";
 import { User } from "@prisma/client";
+import { SchemaUser } from "../images/types.ts";
 
 const createNewUser = async ({ email, id, picture }: UserData) => {
   const newUser = await prisma.user.create({
@@ -14,7 +15,7 @@ const createNewUser = async ({ email, id, picture }: UserData) => {
   return newUser;
 };
 
-export const findUser = async (user: UserData) => {
+export const findUser = async (user: UserData): Promise<SchemaUser | null> => {
   const existingUser = await prisma.user.findUnique({
     where: {
       email: user.email,

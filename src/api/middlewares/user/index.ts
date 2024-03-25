@@ -11,8 +11,10 @@ export const getUserData = async (
   try {
     const googleUser = await getGoogleUser(access_token);
     const appUser = await findUser(googleUser);
-
-    req.locals.user = appUser;
+    if (!appUser) {
+      return res.status(404).send(new Error("Not found"));
+    }
+    req.locals.appUser = appUser;
     next();
   } catch (err) {
     console.error("ERROR", err);

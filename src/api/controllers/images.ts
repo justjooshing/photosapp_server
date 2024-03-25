@@ -20,6 +20,7 @@ export const ImagesController = Object.freeze({
       }
       return res.status(400).send("Invalid type param");
     } catch (err) {
+      console.error(err);
       res.status(400).send(err);
     }
   },
@@ -27,8 +28,7 @@ export const ImagesController = Object.freeze({
     if (
       !req.body?.image ||
       !req.body?.choice ||
-      req.body.choice !== "keep" ||
-      req.body.choice !== "delete"
+      (req.body.choice !== "keep" && req.body.choice !== "delete")
     ) {
       return res.status(400).send("Missing required body");
     }
