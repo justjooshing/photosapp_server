@@ -1,6 +1,5 @@
 import ky from "ky";
 import {
-  HandleGetImages,
   Images,
   MediaItemResultsImages,
   MediaItemSearch,
@@ -14,8 +13,7 @@ import {
 } from "@prisma/client";
 import { newestImagesFilter } from "../../helpers/filters.ts";
 import { prisma } from "../../../loaders/prisma.ts";
-
-const endpoint = "https://photoslibrary.googleapis.com/v1/mediaItems";
+import { handleGetImages } from "../../third-party/images.ts";
 
 export const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
   pageSize: 100,
@@ -27,28 +25,6 @@ export const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
   },
   ...options,
 });
-
-export const handleGetImages = async <
-  ImageResponseType = MediaItemResultsImages | Images
->({
-  access_token,
-  options,
-}: HandleGetImages): Promise<ImageResponseType> => {
-  const client = ky.create({
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-    },
-  });
-  let method: "get" | "post" = options.method === ":search" ? "post" : "get";
-
-  const res = await client[method](`${endpoint}${options.method}`, {
-    ...(options.method === ":search" && { json: options.bodyParams }),
-    ...(options.method === ":batchGet" && {
-      searchParams: options.searchParams,
-    }),
-  });
-  return await res.json<ImageResponseType>();
-};
 
 interface LoadImagesParams {
   access_token: string;

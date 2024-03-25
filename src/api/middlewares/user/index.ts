@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { findUser, getUser } from "../../services/user/user.ts";
+import { findUser } from "../../services/user/user.ts";
+import { getGoogleUser } from "../../third-party/user.ts";
 
 export const getUserData = async (
   req: Request,
@@ -8,7 +9,7 @@ export const getUserData = async (
 ) => {
   const { access_token } = req.locals;
   try {
-    const googleUser = await getUser(access_token);
+    const googleUser = await getGoogleUser(access_token);
     const appUser = await findUser(googleUser);
 
     req.locals.user = appUser;

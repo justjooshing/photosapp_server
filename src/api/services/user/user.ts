@@ -3,18 +3,6 @@ import { UserData } from "./types.ts";
 import { prisma } from "../../../loaders/prisma.ts";
 import { User } from "@prisma/client";
 
-export const getUser = async (access_token: string) => {
-  const client = ky.create({
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-    },
-  });
-  const endpoint = "https://www.googleapis.com/oauth2/v1/userinfo";
-  const data = await client.get(endpoint);
-  const user = await data.json<UserData>();
-  return user;
-};
-
 const createNewUser = async ({ email, id, picture }: UserData) => {
   const newUser = await prisma.user.create({
     data: {
