@@ -80,3 +80,19 @@ export const addCurrentAlbum = async (userId: number) => {
     return newAlbum;
   }
 };
+
+export const selectAlbum = async (userId: number, albumId: number) =>
+  await prisma.album.findUnique({
+    where: {
+      id: albumId,
+      userId,
+    },
+  });
+
+export const selectAlbumImages = async (userId: number, albumId: number) =>
+  await prisma.images.findMany({
+    where: {
+      deleted_album_id: albumId,
+      userId,
+    },
+  });

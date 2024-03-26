@@ -3,8 +3,11 @@ import {
   appendImagesWithFreshUrls,
   findAlbums,
   findFirstImagesOfAlbums,
+  selectAlbum,
+  selectAlbumImages,
 } from "../services/albums/albums.ts";
 import { handleError } from "../utils/index.ts";
+import { addFreshBaseUrls } from "../services/images/images.ts";
 
 export const AlbumController = Object.freeze({
   returnAlbumWithFirstImages: async (req: Request, res: Response) => {
@@ -44,6 +47,28 @@ export const AlbumController = Object.freeze({
         res,
         callback: () =>
           res.status(500).json({ message: "Error fetching albums" }),
+      });
+    }
+  },
+  getImagesFromSpecificAlbum: async (req: Request, res: Response) => {
+    try {
+      const { albumId } = req.params;
+      const { appUser, access_token } = req.locals;
+
+      const numAlbumId = Number(albumId);
+      const albumDetails = await selectAlbum(appUser.id, numAlbumId);
+      const images = await selectAlbumImages(appUser.id, numAlbumId);
+      const freshUrlImages = await addFreshBaseUrls(access_token, images);
+      res
+        .status(200)
+        .json({ title: albumDetails?.title, images: freshUrlImages });
+    } catch (err) {
+      handleError({
+        error: { from: "Images in specific album", err },
+        res,
+        callback: () => {
+          res.status(500).json({ message: "Image fetching issue" });
+        },
       });
     }
   },
