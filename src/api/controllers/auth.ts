@@ -5,6 +5,7 @@ import { findOrCreateUser } from "../services/user/user.ts";
 import { updateNewestImages } from "../services/images/images.ts";
 import { getGoogleUser } from "../third-party/user.ts";
 import { generateAccessToken } from "../third-party/auth.ts";
+import { handleError } from "../utils/index.ts";
 
 export const AuthController = Object.freeze({
   appLogin: (_: Request, res: Response) => {
@@ -17,26 +18,30 @@ export const AuthController = Object.freeze({
     res.status(200).json({ loginLink });
   },
   handleGoogleLogin: async (req: Request, res: Response) => {
-    const returnToErrorPage = () => {
-      res.status(400);
-      res.redirect(CONFIG.clientUrl);
-      return;
-    };
     if (req.query.error || typeof req.query.code !== "string") {
-      return returnToErrorPage();
+      return res.status(400).redirect(CONFIG.clientUrl);
     }
+
     try {
       const access_token = await generateAccessToken(req.query.code);
-      if (access_token) {
-        const user = await getGoogleUser(access_token);
-        const appUser = await findOrCreateUser(user);
-        updateNewestImages(access_token, appUser);
-        res.cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret));
-        res.redirect(CONFIG.clientUrl);
+      if (!access_token) {
+        throw new Error("No access token");
       }
+      const user = await getGoogleUser(access_token);
+      const appUser = await findOrCreateUser(user);
+      updateNewestImages(access_token, appUser);
+      res.cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret));
+      res.redirect(CONFIG.clientUrl);
     } catch (err) {
-      console.error("auth err", err);
-      return returnToErrorPage();
+      return handleError({
+        error: { from: "Auth", err },
+        res,
+        callback: () =>
+          res
+            .status(500)
+            .json({ message: "Login failed" })
+            .redirect(CONFIG.clientUrl),
+      });
     }
   },
 });

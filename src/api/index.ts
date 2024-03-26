@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { albums, count, images, login } from "./routes/index.ts";
+import { albums, count, images, login, user } from "./routes/index.ts";
 import { checkJWT } from "./middlewares/auth/index.ts";
 import { getUserData } from "./middlewares/user/index.ts";
 
@@ -11,6 +11,7 @@ export const routes = () => {
   images(app);
   albums(app);
   count(app);
+  user(app);
 
   return app;
 };

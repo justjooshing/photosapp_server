@@ -209,6 +209,7 @@ export const updateImagesByChoice = async (
           }),
     },
   });
+  // Should I return the image
 };
 
 export const shapeImagesResponse = ({

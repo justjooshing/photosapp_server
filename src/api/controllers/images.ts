@@ -4,6 +4,7 @@ import {
   selectImagesByImageType,
   updateImagesByChoice,
 } from "../services/images/images.ts";
+import { handleError } from "../utils/index.ts";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
@@ -12,16 +13,21 @@ export const ImagesController = Object.freeze({
         access_token,
         appUser: { id: userId },
       } = req.locals;
+      const { type } = req.query;
 
-      if (req.query.type === "today" || req.query.type === "similar") {
-        const images = await selectImagesByImageType(req.query.type, userId);
-        const withUrls = await addFreshBaseUrls(access_token, images);
-        return res.status(200).json({ imageUrls: withUrls });
+      if (type !== "today" && type !== "similar") {
+        return res.send(400).json({ message: "Invalid type param" });
       }
-      return res.status(400).send("Invalid type param");
+      const images = await selectImagesByImageType(type, userId);
+      const withUrls = await addFreshBaseUrls(access_token, images);
+      return res.status(200).json({ imageUrls: withUrls });
     } catch (err) {
-      console.error(err);
-      res.status(400).send(err);
+      return handleError({
+        error: { from: "Getting images", err },
+        res,
+        callback: () =>
+          res.status(500).json({ message: "Error getting images" }),
+      });
     }
   },
   handleSortOrDeletePhotos: async (req: Request, res: Response) => {
@@ -30,7 +36,7 @@ export const ImagesController = Object.freeze({
       !req.body?.choice ||
       (req.body.choice !== "keep" && req.body.choice !== "delete")
     ) {
-      return res.status(400).send("Missing required body");
+      return res.status(400).json({ message: "Missing required body" });
     }
 
     const {
@@ -40,10 +46,15 @@ export const ImagesController = Object.freeze({
 
     try {
       await updateImagesByChoice(appUser.id, choice, image.id);
-      res.status(201).json({});
+      // Should I return the image
+      res.status(204).end();
     } catch (err) {
-      console.log("Update image ERR", err);
-      res.status(500).send("Error sorting image ");
+      return handleError({
+        error: { from: "Updating image", err },
+        res,
+        callback: () =>
+          res.status(500).json({ message: "Error sorting image" }),
+      });
     }
   },
 });

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { CONFIG } from "../../../config/index.ts";
 import { getTokenFromHeader } from "../../services/auth/auth.ts";
 import jwt from "jsonwebtoken";
+import { handleError } from "../../utils/index.ts";
 
 export const checkJWT = (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -13,7 +14,14 @@ export const checkJWT = (req: Request, res: Response, next: NextFunction) => {
     req.locals.access_token = verifiedToken;
     next();
   } catch (err) {
-    console.log("Check JWT ERR", err);
-    res.cookie("jwt", undefined).status(401).send(err);
+    return handleError({
+      error: { from: "JWT", err },
+      res,
+      callback: () =>
+        res
+          .cookie("jwt", undefined)
+          .status(401)
+          .json({ message: "Auth issue" }),
+    });
   }
 };

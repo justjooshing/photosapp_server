@@ -4,6 +4,7 @@ import {
   findAlbums,
   findFirstImagesOfAlbums,
 } from "../services/albums/albums.ts";
+import { handleError } from "../utils/index.ts";
 
 export const AlbumController = Object.freeze({
   returnAlbumWithFirstImages: async (req: Request, res: Response) => {
@@ -16,7 +17,7 @@ export const AlbumController = Object.freeze({
       const albums = await findAlbums(userId);
 
       if (!albums.length) {
-        return res.send(200).json({ albums: [] });
+        return res.status(200).json({ albums: [] });
       }
 
       const firstImages = await findFirstImagesOfAlbums(albums);
@@ -38,8 +39,12 @@ export const AlbumController = Object.freeze({
         });
       }
     } catch (err) {
-      console.error("returning albums", err);
-      res.status(400).send(err);
+      return handleError({
+        error: { from: "fetching albums", err },
+        res,
+        callback: () =>
+          res.status(500).json({ message: "Error fetching albums" }),
+      });
     }
   },
 });
