@@ -5,6 +5,7 @@ import {
   updateImagesByChoice,
 } from "../services/images/images.ts";
 import { handleError } from "../utils/index.ts";
+import { getOrCreateCurrentAlbum } from "../services/albums/albums.ts";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
@@ -45,8 +46,9 @@ export const ImagesController = Object.freeze({
     } = req;
 
     try {
-      await updateImagesByChoice(appUser.id, choice, image.id);
-      // Should I return the image
+      const currentAlbum = await getOrCreateCurrentAlbum(appUser.id);
+      await updateImagesByChoice(currentAlbum.id, choice, image.id);
+
       res.status(204).end();
     } catch (err) {
       return handleError({

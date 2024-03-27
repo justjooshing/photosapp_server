@@ -9,7 +9,6 @@ import { prisma } from "../../../loaders/prisma.ts";
 import { baseBodyParams, handleGetImages } from "../../third-party/images.ts";
 import { User } from "@prisma/client";
 import { MediaItemResultsImages, Images } from "../../third-party/types.ts";
-import { addCurrentAlbum } from "../albums/albums.ts";
 import { queryByImageType } from "./queries.ts";
 import { prismaRawSql } from "../../utils/index.ts";
 import { updateUserLastUpdate } from "../user/user.ts";
@@ -56,7 +55,7 @@ export const loadImageSet = async ({
 
 export const updateNewestImages = async (
   access_token: string,
-  appUser: User
+  appUser: User,
 ) => {
   const currentDate = new Date();
 
@@ -92,7 +91,7 @@ export const updateNewestImages = async (
 
 const identifyNewImages = async (
   userId: number,
-  images: Images["mediaItems"] = []
+  images: Images["mediaItems"] = [],
 ) => {
   const newImages: Images["mediaItems"] = [];
   for (const image of images) {
@@ -134,7 +133,7 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
 // Super annoying having to refetch the image urls again
 export const addFreshBaseUrls = async (
   access_token: string,
-  images: SchemaImages[]
+  images: SchemaImages[],
 ) => {
   console.log("adding fresh baseURLs");
   try {
@@ -167,7 +166,7 @@ export const addFreshBaseUrls = async (
           }
           return accImages;
         },
-        []
+        [],
       );
       const shapedImages = updatedImages.map(shapeImagesResponse);
       // Updated with productUrl
@@ -183,7 +182,7 @@ export const addFreshBaseUrls = async (
 
 export const selectImagesByImageType = async (
   type: ImageType,
-  userId: number
+  userId: number,
 ) => {
   const query = queryByImageType(type, userId);
   const images = await prismaRawSql<SchemaImages[]>(query);
@@ -191,11 +190,10 @@ export const selectImagesByImageType = async (
 };
 
 export const updateImagesByChoice = async (
-  userId: number,
+  albumId: number,
   choice: "keep" | "delete",
-  imageId: number
-) => {
-  const currentAlbum = await addCurrentAlbum(userId);
+  imageId: number,
+) =>
   await prisma.images.update({
     where: {
       id: imageId,
@@ -205,12 +203,10 @@ export const updateImagesByChoice = async (
         ? { sorted_at: new Date() }
         : {
             deleted_at: new Date(),
-            deleted_album_id: currentAlbum.id,
+            deleted_album_id: albumId,
           }),
     },
   });
-  // Should I return the image
-};
 
 export const shapeImagesResponse = ({
   baseUrl,
