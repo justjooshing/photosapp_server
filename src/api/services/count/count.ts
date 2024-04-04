@@ -1,22 +1,16 @@
 import { prisma } from "../../../loaders/prisma.ts";
-import { Prisma } from "@prisma/client";
 
-const selectCountByColumn = async (
-  userId: number,
-  column: Prisma.ImagesScalarFieldEnum
-) =>
+const selectCountByColumn = async (userId: number, choice: "delete" | "keep") =>
   await prisma.images.count({
     where: {
       userId,
-      [column]: {
-        not: null,
-      },
+      sorted_status: choice,
     },
   });
 
 export const getSortCounts = async (userId: number) => {
-  const deletedCount = await selectCountByColumn(userId, "deleted_at");
-  const sortedCount = await selectCountByColumn(userId, "sorted_at");
+  const deletedCount = await selectCountByColumn(userId, "delete");
+  const sortedCount = await selectCountByColumn(userId, "keep");
 
   return { deletedCount, sortedCount };
 };
