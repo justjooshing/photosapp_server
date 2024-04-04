@@ -117,8 +117,6 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
           googleId: image.id,
           userId,
           created_at: image.mediaMetadata.creationTime,
-          width: Number(image.mediaMetadata.width),
-          height: Number(image.mediaMetadata.height),
         })),
       });
       console.log("db updated");
@@ -193,18 +191,15 @@ export const updateImagesByChoice = async (
   albumId: number,
   choice: "keep" | "delete",
   imageId: number,
-) =>
+): Promise<SchemaImages> =>
   await prisma.images.update({
     where: {
       id: imageId,
     },
     data: {
-      ...(choice === "keep"
-        ? { sorted_at: new Date() }
-        : {
-            deleted_at: new Date(),
-            deleted_album_id: albumId,
-          }),
+      sorted_status: choice,
+      sorted_album_id: albumId,
+      updated_at: new Date(),
     },
   });
 
@@ -212,14 +207,12 @@ export const shapeImagesResponse = ({
   baseUrl,
   productUrl,
   id,
-  height,
-  width,
-  deleted_album_id,
+  sorted_status,
+  sorted_album_id,
 }: WithPhotoUrl) => ({
-  deleted_album_id,
+  sorted_status,
+  sorted_album_id,
   baseUrl,
   productUrl,
   id,
-  height,
-  width,
 });

@@ -8,7 +8,7 @@ export const CountController = Object.freeze({
       const counts = await getSortCounts(req.locals.appUser.id);
       res.status(200).json({ counts });
     } catch (err) {
-      return handleError({
+      handleError({
         error: { from: "Counts", err },
         res,
         callback: () =>

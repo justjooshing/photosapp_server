@@ -29,7 +29,7 @@ export const AlbumController = Object.freeze({
         const data = await appendImagesWithFreshUrls(
           access_token,
           firstImages,
-          albums
+          albums,
         );
 
         res.json({ albums: data });
@@ -42,7 +42,7 @@ export const AlbumController = Object.freeze({
         });
       }
     } catch (err) {
-      return handleError({
+      handleError({
         error: { from: "fetching albums", err },
         res,
         callback: () =>

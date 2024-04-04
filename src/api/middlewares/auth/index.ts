@@ -14,7 +14,7 @@ export const checkJWT = (req: Request, res: Response, next: NextFunction) => {
     req.locals.access_token = verifiedToken;
     next();
   } catch (err) {
-    return handleError({
+    handleError({
       error: { from: "JWT", err },
       res,
       callback: () =>

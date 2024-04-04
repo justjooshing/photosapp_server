@@ -25,17 +25,15 @@ model User {
 }
 
 model Images {
-  id               Int       @id @default(autoincrement())
-  googleId         String    @unique
-  user             User      @relation(fields: [userId], references: [id])
-  userId           Int
-  created_at       DateTime
-  deleted_at       DateTime?
-  sorted_at        DateTime?
-  album            Album?    @relation(fields: [deleted_album_id], references: [id])
-  deleted_album_id Int?
-  width            Int
-  height           Int
+  id              Int       @id @default(autoincrement())
+  googleId        String    @unique
+  user            User      @relation(fields: [userId], references: [id])
+  userId          Int
+  created_at      DateTime
+  updated_at      DateTime?
+  album           Album?    @relation(fields: [sorted_album_id], references: [id])
+  sorted_album_id Int?
+  sorted_status   String?
 }
 
 model Album {

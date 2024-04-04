@@ -33,14 +33,10 @@ export const AuthController = Object.freeze({
       res.cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret));
       res.redirect(CONFIG.clientUrl);
     } catch (err) {
-      return handleError({
+      handleError({
         error: { from: "Auth", err },
         res,
-        callback: () =>
-          res
-            .status(500)
-            .json({ message: "Login failed" })
-            .redirect(CONFIG.clientUrl),
+        callback: () => res.status(500).redirect(CONFIG.clientUrl),
       });
     }
   },

@@ -16,7 +16,7 @@ export const findFirstImagesOfAlbums = async (albums: Album[]) => {
   for (const album of albums) {
     const firstImage = await prisma.images.findFirst({
       where: {
-        deleted_album_id: album.id,
+        sorted_album_id: album.id,
       },
     });
 
@@ -38,7 +38,7 @@ export const appendImagesWithFreshUrls = async (
 
   const albumsWithPhotoUrls = albums.map((album) => {
     const matchingImage = imagesWithUrls.find(
-      ({ deleted_album_id }) => deleted_album_id === album.id,
+      ({ sorted_album_id }) => sorted_album_id === album.id,
     );
 
     return {
@@ -63,22 +63,38 @@ export const createAlbum = async (
   return newAlbum;
 };
 
-export const getOrCreateCurrentAlbum = async (userId: number) => {
+export const getOrCreateCurrentAlbum = async (
+  userId: number,
+  albumId?: number,
+) => {
   const currentDate = new Date().toDateString();
-  const albumTitle = `PhotosApp: ${currentDate}`;
-  const existingAlbum = await prisma.album.findUnique({
+  const albumTitle = currentDate;
+
+  if (albumId) {
+    const currentAlbum = await prisma.album.findUnique({
+      where: {
+        userId,
+        id: albumId,
+      },
+    });
+    if (currentAlbum) {
+      return currentAlbum;
+    }
+  }
+
+  const todaysAlbum = await prisma.album.findUnique({
     where: {
       title: albumTitle,
       userId,
     },
   });
 
-  if (existingAlbum) {
-    return existingAlbum;
-  } else {
-    const newAlbum = await createAlbum(userId, albumTitle);
-    return newAlbum;
+  if (todaysAlbum) {
+    return todaysAlbum;
   }
+
+  const newAlbum = await createAlbum(userId, albumTitle);
+  return newAlbum;
 };
 
 export const selectAlbum = async (userId: number, albumId: number) =>
@@ -92,7 +108,7 @@ export const selectAlbum = async (userId: number, albumId: number) =>
 export const selectAlbumImages = async (userId: number, albumId: number) =>
   await prisma.images.findMany({
     where: {
-      deleted_album_id: albumId,
+      sorted_album_id: albumId,
       userId,
     },
   });

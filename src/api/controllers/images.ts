@@ -23,7 +23,7 @@ export const ImagesController = Object.freeze({
       const withUrls = await addFreshBaseUrls(access_token, images);
       return res.status(200).json({ imageUrls: withUrls });
     } catch (err) {
-      return handleError({
+      handleError({
         error: { from: "Getting images", err },
         res,
         callback: () =>
@@ -41,17 +41,29 @@ export const ImagesController = Object.freeze({
     }
 
     const {
-      locals: { appUser },
+      locals: { appUser, access_token },
       body: { choice, image },
     } = req;
 
     try {
-      const currentAlbum = await getOrCreateCurrentAlbum(appUser.id);
-      await updateImagesByChoice(currentAlbum.id, choice, image.id);
+      const currentAlbum = await getOrCreateCurrentAlbum(
+        appUser.id,
+        image.sorted_album_id,
+      );
 
-      res.status(204).end();
+      const updatedImage = await updateImagesByChoice(
+        currentAlbum.id,
+        choice,
+        image.id,
+      );
+
+      const freshUrlImage = await addFreshBaseUrls(access_token, [
+        updatedImage,
+      ]);
+
+      res.status(200).json({ image: freshUrlImage });
     } catch (err) {
-      return handleError({
+      handleError({
         error: { from: "Updating image", err },
         res,
         callback: () =>
