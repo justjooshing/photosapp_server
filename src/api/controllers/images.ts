@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import {
-  addFreshBaseUrls,
+  checkValidBaseUrl,
   selectImagesByImageType,
   updateImagesByChoice,
 } from "../services/images/images.ts";
@@ -20,7 +20,8 @@ export const ImagesController = Object.freeze({
         return res.send(400).json({ message: "Invalid type param" });
       }
       const images = await selectImagesByImageType(type, userId);
-      const withUrls = await addFreshBaseUrls(access_token, images);
+      const withUrls = await checkValidBaseUrl(access_token, images);
+
       return res.status(200).json({ imageUrls: withUrls });
     } catch (err) {
       handleError({
@@ -57,7 +58,7 @@ export const ImagesController = Object.freeze({
         image.id,
       );
 
-      const freshUrlImage = await addFreshBaseUrls(access_token, [
+      const freshUrlImage = await checkValidBaseUrl(access_token, [
         updatedImage,
       ]);
 

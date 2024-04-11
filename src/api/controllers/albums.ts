@@ -7,7 +7,7 @@ import {
   selectAlbumImages,
 } from "../services/albums/albums.ts";
 import { handleError } from "../utils/index.ts";
-import { addFreshBaseUrls } from "../services/images/images.ts";
+import { checkValidBaseUrl } from "../services/images/images.ts";
 
 export const AlbumController = Object.freeze({
   returnAlbumWithFirstImages: async (req: Request, res: Response) => {
@@ -58,7 +58,7 @@ export const AlbumController = Object.freeze({
       const numAlbumId = Number(albumId);
       const albumDetails = await selectAlbum(appUser.id, numAlbumId);
       const images = await selectAlbumImages(appUser.id, numAlbumId);
-      const freshUrlImages = await addFreshBaseUrls(access_token, images);
+      const freshUrlImages = await checkValidBaseUrl(access_token, images);
       res
         .status(200)
         .json({ title: albumDetails?.title, images: freshUrlImages });

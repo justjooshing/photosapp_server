@@ -1,22 +1,27 @@
-import { Album, Images } from "@prisma/client";
 import { prisma } from "../../../loaders/prisma.ts";
-import { addFreshBaseUrls } from "../images/images.ts";
-import { SchemaAlbum } from "../images/types.ts";
+import { checkValidBaseUrl } from "../images/images.ts";
+import { SchemaAlbum, SchemaImages } from "../images/types.ts";
 
 export const findAlbums = async (userId: number) =>
   await prisma.album.findMany({
+    orderBy: {
+      created_at: "desc",
+    },
     where: {
       userId,
     },
   });
 
-export const findFirstImagesOfAlbums = async (albums: Album[]) => {
-  const firstImages = new Map<number, Images>();
+export const findFirstImagesOfAlbums = async (
+  albums: SchemaAlbum[],
+): Promise<Map<number, SchemaImages>> => {
+  const firstImages = new Map<number, SchemaImages>();
 
   for (const album of albums) {
     const firstImage = await prisma.images.findFirst({
       where: {
         sorted_album_id: album.id,
+        actually_deleted: null,
       },
     });
 
@@ -29,10 +34,10 @@ export const findFirstImagesOfAlbums = async (albums: Album[]) => {
 
 export const appendImagesWithFreshUrls = async (
   access_token: string,
-  firstImages: Map<number, Images>,
-  albums: Album[],
+  firstImages: Map<number, SchemaImages>,
+  albums: SchemaAlbum[],
 ) => {
-  const imagesWithUrls = await addFreshBaseUrls(access_token, [
+  const imagesWithUrls = await checkValidBaseUrl(access_token, [
     ...firstImages.values(),
   ]);
 
@@ -105,10 +110,15 @@ export const selectAlbum = async (userId: number, albumId: number) =>
     },
   });
 
-export const selectAlbumImages = async (userId: number, albumId: number) =>
+export const selectAlbumImages = async (
+  userId: number,
+  albumId: number,
+): Promise<SchemaImages[]> =>
   await prisma.images.findMany({
+    orderBy: [{ created_at: "asc" }],
     where: {
       sorted_album_id: albumId,
       userId,
+      actually_deleted: null,
     },
   });

@@ -46,8 +46,11 @@ interface Status {
     [key: string]: string;
   }[];
 }
+
+export type MediaItemResultSuccess = { mediaItem: MediaItem<Photo> };
+export type MediaItemResultError = { status: Status };
 export type MediaItemResultsImages = {
-  mediaItemResults: ({ mediaItem: MediaItem<Photo> } | Status)[];
+  mediaItemResults: (MediaItemResultSuccess | MediaItemResultError)[];
 };
 
 export type MediaItemResultsVideo = {

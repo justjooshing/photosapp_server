@@ -26,10 +26,11 @@ export interface HandleGetImages {
       };
 }
 
-export type WithPhotoUrl = SchemaImages & {
-  baseUrl: string;
-  productUrl: string;
-};
+// ShapedImages sent in res
+export type ApiImages = Pick<
+  SchemaImages,
+  "sorted_status" | "sorted_album_id" | "baseUrl" | "productUrl" | "id"
+>;
 
 export interface MiddlewareProps {
   access_token: string;

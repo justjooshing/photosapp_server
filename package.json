@@ -33,7 +33,7 @@
     "@types/node": "^20.11.24",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
-    "prisma": "^5.10.2",
+    "prisma": "^5.12.1",
     "tsx": "^4.7.1",
     "typescript": "^5.4.3",
     "typescript-eslint": "^7.3.1"
