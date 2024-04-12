@@ -10,5 +10,5 @@ const { port } = CONFIG;
 expressSetup(app);
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.info(`Server is running on port ${port}`);
 });

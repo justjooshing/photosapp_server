@@ -46,7 +46,7 @@ export const loadImageSet = async ({
         console.count("fetching next page");
         await fetchAllImages(data.nextPageToken);
       } else {
-        console.log("no more pages");
+        console.info("no more pages");
         return;
       }
     };
@@ -86,7 +86,7 @@ export const updateNewestImages = async (
       const newImages = await loadImageSet({ access_token, bodyParams });
 
       await updateImagesDB(appUserId, newImages);
-      console.log(`${bodyParams.filters ? "new" : "initial"} images fetched`);
+      console.info(`${bodyParams.filters ? "new" : "initial"} images fetched`);
     } catch (err) {
       console.error(`${bodyParams.filters ? "new" : "initial"} load`, err);
       throw err;
@@ -128,7 +128,7 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
           productUrl: image.productUrl,
         })),
       });
-      console.log("db updated");
+      console.info("db updated");
     }
     await updateUserLastUpdate(userId);
   } catch (err) {
@@ -184,7 +184,7 @@ export const addFreshBaseUrls = async (
   access_token: string,
   images: SchemaImages[],
 ): Promise<SchemaImages[]> => {
-  console.log("adding fresh baseURLs");
+  console.info("adding fresh baseURLs");
   try {
     const mediaItemIds = new URLSearchParams();
     for (const image of images) {

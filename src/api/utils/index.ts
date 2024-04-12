@@ -14,7 +14,7 @@ export const handleError = ({
   res: Response;
   callback: () => void;
 }) => {
-  console.log(`${error.from} ERROR`, error.err);
+  console.error(`${error.from} ERROR`, error.err);
   if (error.err instanceof Error) {
     callback();
   } else {

@@ -11,7 +11,7 @@ const createNewUser = async ({ email, id, picture }: UserData) => {
       googleProfilePicture: picture,
     },
   });
-  console.log("database updated");
+  console.info("database updated");
   return newUser;
 };
 
