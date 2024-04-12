@@ -19,6 +19,7 @@ export const findFirstImagesOfAlbums = async (
 
   for (const album of albums) {
     const firstImage = await prisma.images.findFirst({
+      orderBy: [{ created_at: "asc" }],
       where: {
         sorted_album_id: album.id,
         actually_deleted: null,
