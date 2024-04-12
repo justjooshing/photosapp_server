@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE "Album" ALTER COLUMN "created_at" SET DATA TYPE TIMESTAMPTZ(3);
+
+-- AlterTable
+ALTER TABLE "Images" ALTER COLUMN "updated_at" SET DATA TYPE TIMESTAMPTZ(3),
+ALTER COLUMN "actually_deleted" SET DATA TYPE TIMESTAMPTZ(3),
+ALTER COLUMN "baseUrl_last_updated" SET DATA TYPE TIMESTAMPTZ(3);
+
+-- AlterTable
+ALTER TABLE "User" ALTER COLUMN "images_last_updated_at" SET DATA TYPE TIMESTAMPTZ(3);

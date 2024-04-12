@@ -142,8 +142,7 @@ export const checkValidBaseUrl = async (
   images: SchemaImages[],
 ) => {
   // Here, check which images don't currently have in-date baseUrls
-  const currentDate = new Date();
-  const invalidIfBefore = new Date(currentDate.getHours() - 1);
+  const invalidIfBefore = new Date(new Date().getTime() - 1000 * 60 * 60);
 
   const { validBaseUrls, invalidBaseUrls } = images.reduce(
     (
