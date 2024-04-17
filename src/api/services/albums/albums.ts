@@ -73,8 +73,7 @@ export const getOrCreateCurrentAlbum = async (
   userId: number,
   albumId?: number,
 ) => {
-  const currentDate = new Date().toDateString();
-  const albumTitle = currentDate;
+  const albumTitle = new Date().toDateString();
 
   if (albumId) {
     const currentAlbum = await prisma.album.findUnique({
