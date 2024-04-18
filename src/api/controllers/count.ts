@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { getSortCounts } from "../services/count/count.ts";
-import { handleError } from "../utils/index.ts";
+import { getSortCounts } from "@/services/count/count.ts";
+import { handleError } from "@/utils/index.ts";
 
 export const CountController = Object.freeze({
   getSortCounts: async (req: Request, res: Response) => {

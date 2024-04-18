@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "tsx index.ts",
     "start": "npx tsc && cd dist && node index.js",
-    "lint": "yarn eslint ."
+    "lint": "yarn eslint . --fix"
   },
   "dependencies": {
     "@prisma/client": "^5.12.1",

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ImagesController } from "../controllers/images.ts";
+import { ImagesController } from "@/controllers/images.ts";
 
 const route = Router();
 

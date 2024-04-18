@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { CONFIG } from "../../../config/index.ts";
-import { getTokenFromHeader } from "../../services/auth/auth.ts";
+import { getTokenFromHeader } from "@/services/auth/auth.ts";
 import jwt from "jsonwebtoken";
-import { handleError } from "../../utils/index.ts";
+import { handleError } from "@/utils/index.ts";
 
 export const checkJWT = (req: Request, res: Response, next: NextFunction) => {
   try {

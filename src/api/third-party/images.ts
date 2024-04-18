@@ -1,5 +1,5 @@
 import ky from "ky";
-import { HandleGetImages } from "../services/images/types.ts";
+import { HandleGetImages } from "@/services/images/types.ts";
 import { MediaItemSearch, MediaItemResultsImages, Images } from "./types.ts";
 
 const endpoint = "https://photoslibrary.googleapis.com/v1/mediaItems";
@@ -16,7 +16,7 @@ export const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
 });
 
 export const handleGetImages = async <
-  ImageResponseType = MediaItemResultsImages | Images
+  ImageResponseType = MediaItemResultsImages | Images,
 >({
   access_token,
   options,

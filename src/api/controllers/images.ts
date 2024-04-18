@@ -3,9 +3,9 @@ import {
   checkValidBaseUrl,
   selectImagesByImageType,
   updateImagesByChoice,
-} from "../services/images/images.ts";
-import { handleError } from "../utils/index.ts";
-import { getOrCreateCurrentAlbum } from "../services/albums/albums.ts";
+} from "@/services/images/images.ts";
+import { handleError } from "@/utils/index.ts";
+import { getOrCreateCurrentAlbum } from "@/services/albums/albums.ts";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {

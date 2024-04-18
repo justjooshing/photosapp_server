@@ -1,6 +1,6 @@
 import { prisma } from "../../../loaders/prisma.ts";
-import { checkValidBaseUrl } from "../images/images.ts";
-import { SchemaAlbum, SchemaImages } from "../images/types.ts";
+import { checkValidBaseUrl } from "@/services/images/images.ts";
+import { SchemaAlbum, SchemaImages } from "@/services/images/types.ts";
 
 export const findAlbums = async (userId: number) =>
   await prisma.album.findMany({

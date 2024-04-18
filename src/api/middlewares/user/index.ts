@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { findUser } from "../../services/user/user.ts";
-import { getGoogleUser } from "../../third-party/user.ts";
+import { findUser } from "@/services/user/user.ts";
+import { getGoogleUser } from "@/third-party/user.ts";
 
 export const getUserData = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const { access_token } = req.locals;
   try {
