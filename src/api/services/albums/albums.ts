@@ -71,7 +71,7 @@ export const createAlbum = async (
 
 export const getOrCreateCurrentAlbum = async (
   userId: number,
-  albumId?: number,
+  albumId: number | null,
 ) => {
   const albumTitle = new Date().toDateString();
 

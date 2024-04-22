@@ -94,6 +94,14 @@ export const updateNewestImages = async (
   }
 };
 
+export const findImage = async (userId: number, imageId: number) =>
+  await prisma.images.findUnique({
+    where: {
+      userId,
+      id: imageId,
+    },
+  });
+
 const identifyNewImages = async (
   userId: number,
   images: Images["mediaItems"] = [],
@@ -150,6 +158,7 @@ export const checkValidBaseUrl = async (
       curr,
     ) => {
       if (
+        !curr.baseUrl ||
         !curr.baseUrl_last_updated ||
         curr.baseUrl_last_updated < invalidIfBefore
       ) {
@@ -273,7 +282,7 @@ export const selectImagesByImageType = async (
 
 export const updateImagesByChoice = async (
   albumId: number,
-  choice: "keep" | "delete",
+  sorted_status: "keep" | "delete",
   imageId: number,
 ): Promise<SchemaImages> =>
   await prisma.images.update({
@@ -281,7 +290,7 @@ export const updateImagesByChoice = async (
       id: imageId,
     },
     data: {
-      sorted_status: choice,
+      sorted_status,
       sorted_album_id: albumId,
       updated_at: new Date(),
     },

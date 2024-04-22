@@ -1,11 +1,14 @@
 import { Request, Response } from "express";
 import {
   checkValidBaseUrl,
+  findImage,
   selectImagesByImageType,
   updateImagesByChoice,
 } from "@/services/images/images.ts";
 import { handleError } from "@/utils/index.ts";
 import { getOrCreateCurrentAlbum } from "@/services/albums/albums.ts";
+import { SchemaImages } from "@/services/images/types.ts";
+import { prisma } from "../../loaders/prisma.ts";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
@@ -32,31 +35,42 @@ export const ImagesController = Object.freeze({
       });
     }
   },
-  handleSortOrDeletePhotos: async (req: Request, res: Response) => {
-    if (
-      !req.body?.image ||
-      !req.body?.choice ||
-      (req.body.choice !== "keep" && req.body.choice !== "delete")
-    ) {
-      return res.status(400).json({ message: "Missing required body" });
-    }
-
+  handleUpdateSingleImage: async (req: Request, res: Response) => {
     const {
       locals: { appUser, access_token },
-      body: { choice, image },
+      body,
+      params: { imageId },
     } = req;
+
+    const currentImage = await findImage(appUser.id, Number(imageId));
+    if (!currentImage) {
+      return res.status(404).json({ message: "Image not found" });
+    }
 
     try {
       const currentAlbum = await getOrCreateCurrentAlbum(
         appUser.id,
-        image.sorted_album_id,
+        currentImage.sorted_album_id,
       );
 
-      const updatedImage = await updateImagesByChoice(
-        currentAlbum.id,
-        choice,
-        image.id,
-      );
+      const updatedImage = await (async (): Promise<SchemaImages> => {
+        if (!body) return currentImage;
+        if (body.sorted_status === "keep" || body.sorted_status === "delete") {
+          return await updateImagesByChoice(
+            currentAlbum.id,
+            body.sorted_status,
+            currentImage.id,
+          );
+        } else {
+          return await prisma.images.update({
+            where: {
+              id: currentImage.id,
+              userId: appUser.id,
+            },
+            data: body,
+          });
+        }
+      })();
 
       const freshUrlImage = await checkValidBaseUrl(access_token, [
         updatedImage,
@@ -68,7 +82,7 @@ export const ImagesController = Object.freeze({
         error: { from: "Updating image", err },
         res,
         callback: () =>
-          res.status(500).json({ message: "Error sorting image" }),
+          res.status(500).json({ message: "Error updating image" }),
       });
     }
   },
