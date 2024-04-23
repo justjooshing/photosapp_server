@@ -27,6 +27,7 @@ model User {
 model Images {
   id                   Int       @id @default(autoincrement())
   googleId             String    @unique
+  mime_type            String?
   user                 User      @relation(fields: [userId], references: [id])
   userId               Int
   baseUrl              String?   @unique
