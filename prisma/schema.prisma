@@ -20,8 +20,8 @@ model User {
   googleProfilePicture   String    @unique
   created_at             DateTime? @default(now())
   images_last_updated_at DateTime? @db.Timestamptz(3)
-  Images                 Images[]
-  Album                  Album[]
+  images                 Images[]
+  album                  Album[]
 }
 
 model Images {
@@ -47,5 +47,5 @@ model Album {
   userId     Int
   created_at DateTime? @default(now()) @db.Timestamptz(3)
   title      String    @unique
-  Images     Images[]
+  images     Images[]
 }

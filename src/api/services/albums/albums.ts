@@ -9,6 +9,15 @@ export const findAlbums = async (userId: number) =>
     },
     where: {
       userId,
+      images: {
+        some: {
+          NOT: {
+            actually_deleted: {
+              not: null,
+            },
+          },
+        },
+      },
     },
   });
 
