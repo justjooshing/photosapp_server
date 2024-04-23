@@ -23,6 +23,9 @@ export const findFirstImagesOfAlbums = async (
       where: {
         sorted_album_id: album.id,
         actually_deleted: null,
+        mime_type: {
+          not: "video/mp4",
+        },
       },
     });
 
@@ -120,5 +123,8 @@ export const selectAlbumImages = async (
       sorted_album_id: albumId,
       userId,
       actually_deleted: null,
+      mime_type: {
+        not: "video/mp4",
+      },
     },
   });

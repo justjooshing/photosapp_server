@@ -20,7 +20,13 @@ interface MediaItems<T> {
   id: string;
   productUrl: string;
   baseUrl: string;
-  mimeType: "video/mp4" | "image/jpeg" | string;
+  mimeType:
+    | "video/mp4"
+    | "image/jpeg"
+    | "image/heif"
+    | "image/png"
+    | "image/gif"
+    | string;
   mediaMetadata: T & {
     creationTime: string; // Timestamp
     width: string;
