@@ -70,10 +70,11 @@ export const updateNewestImages = async (
       // Grab all images
       return {};
     } else if (
-      images_last_updated_at.toDateString() < currentDate.toDateString()
+      // Grab newest images each day
+      new Date(images_last_updated_at.toDateString()) <
+      new Date(currentDate.toDateString())
     ) {
       const lastUpdated = new Date(images_last_updated_at);
-      // Grab newest images
       return {
         filters: newestImagesFilter(lastUpdated),
       };
@@ -106,18 +107,19 @@ const identifyNewImages = async (
   userId: number,
   images: Images["mediaItems"] = [],
 ) => {
-  const newImages: Images["mediaItems"] = [];
-  for (const image of images) {
-    const existingImage = await prisma.images.findUnique({
-      where: {
-        userId,
-        googleId: image.id,
+  const existingImageGoogleIds = await prisma.images
+    .findMany({
+      where: { userId },
+      select: {
+        googleId: true,
       },
-    });
-    if (!existingImage) {
-      newImages.push(image);
-    }
-  }
+    })
+    .then((data) => data.map(({ googleId }) => googleId));
+
+  const newImages: Images["mediaItems"] = images.filter(
+    ({ id }) => !existingImageGoogleIds.includes(id),
+  );
+  console.info("new images count:", newImages.length);
   return newImages;
 };
 
@@ -132,8 +134,9 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
           userId,
           created_at: image.mediaMetadata.creationTime,
           baseUrl: image.baseUrl,
-          baseUrl_updated_at: currentDate,
+          baseUrl_last_updated: currentDate,
           productUrl: image.productUrl,
+          mime_type: image.mimeType,
         })),
       });
       console.info("db updated");
