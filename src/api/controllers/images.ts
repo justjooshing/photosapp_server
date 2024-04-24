@@ -2,13 +2,13 @@ import { Request, Response } from "express";
 import {
   checkValidBaseUrl,
   findImage,
-  selectImagesByImageType,
   updateImagesByChoice,
 } from "@/services/images/images.ts";
 import { handleError } from "@/utils/index.ts";
 import { getOrCreateCurrentAlbum } from "@/services/albums/albums.ts";
 import { SchemaImages } from "@/services/images/types.ts";
 import { prisma } from "../../loaders/prisma.ts";
+import { queryByImageType } from "@/services/images/queries.ts";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
@@ -22,7 +22,7 @@ export const ImagesController = Object.freeze({
       if (type !== "today" && type !== "similar") {
         return res.send(400).json({ message: "Invalid type param" });
       }
-      const images = await selectImagesByImageType(type, userId);
+      const images = await queryByImageType(type, userId);
       const withUrls = await checkValidBaseUrl(access_token, images);
 
       return res.status(200).json({ imageUrls: withUrls });

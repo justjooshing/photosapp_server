@@ -1,20 +1,20 @@
 import {
   ApiImages,
-  ImageType,
   LoadImagesParams,
   SchemaImages,
+  SchemaImagesSets,
+  SchemaUser,
 } from "./types.ts";
 import { newestImagesFilter } from "@/third-party/filters.ts";
 import { prisma } from "../../../loaders/prisma.ts";
 import { baseBodyParams, handleGetImages } from "@/third-party/images.ts";
-import { User } from "@prisma/client";
 import {
   MediaItemResultsImages,
   Images,
   MediaItemResultError,
   MediaItemResultSuccess,
 } from "@/third-party/types.ts";
-import { queryByImageType } from "./queries.ts";
+import { group_similar } from "./queries.ts";
 import { prismaRawSql } from "@/utils/index.ts";
 import { updateUserLastUpdate } from "@/services/user/user.ts";
 
@@ -58,9 +58,45 @@ export const loadImageSet = async ({
   }
 };
 
+type QueryImageSets = Pick<SchemaImagesSets, "unsorted_image_ids" | "minute">[];
+const identifyNewImagesSets = async (userId: number, data: QueryImageSets) => {
+  const existingImageSets = await prisma.image_sets.findMany({
+    where: { userId },
+    select: { unsorted_image_ids: true },
+  });
+
+  const existingImageIds = existingImageSets
+    .map(({ unsorted_image_ids }) => unsorted_image_ids)
+    .flat();
+
+  // Add as newGroup if none of the current (new) group's unsorted_image_ids exist in existing image_ids
+  const newGroups = data.filter(
+    ({ unsorted_image_ids }) =>
+      !unsorted_image_ids.some((id) => {
+        return existingImageIds.includes(id);
+      }),
+  );
+
+  return newGroups;
+};
+const sortSimilarImages = async (userId: number) => {
+  console.info("getting similar image sets");
+
+  const data = await prismaRawSql<QueryImageSets>(group_similar(userId));
+
+  const newGroups = await identifyNewImagesSets(userId, data);
+
+  if (newGroups.length) {
+    await prisma.image_sets.createMany({
+      data: newGroups.map((group) => ({ ...group, userId })),
+    });
+  }
+  console.info("updated new image sets");
+};
+
 export const updateNewestImages = async (
   access_token: string,
-  appUser: User,
+  appUser: SchemaUser,
 ) => {
   const currentDate = new Date();
 
@@ -82,12 +118,14 @@ export const updateNewestImages = async (
     return undefined;
   })();
 
+  sortSimilarImages(appUser.id);
   if (bodyParams) {
     try {
       const newImages = await loadImageSet({ access_token, bodyParams });
-
       await updateImagesDB(appUserId, newImages);
-      console.info(`${bodyParams.filters ? "new" : "initial"} images fetched`);
+      console.info(
+        `${bodyParams.filters ? "new" : "initial"} images fetched and sorted`,
+      );
     } catch (err) {
       console.error(`${bodyParams.filters ? "new" : "initial"} load`, err);
       throw err;
@@ -272,15 +310,6 @@ export const addFreshBaseUrls = async (
     console.error(err);
     return [];
   }
-};
-
-export const selectImagesByImageType = async (
-  type: ImageType,
-  userId: number,
-) => {
-  const query = queryByImageType(type, userId);
-  const images = await prismaRawSql<SchemaImages[]>(query);
-  return images;
 };
 
 export const updateImagesByChoice = async (
