@@ -1,12 +1,13 @@
 import {
-  Images as SchemaImages,
-  Album as SchemaAlbum,
-  User as SchemaUser,
+  images as SchemaImages,
+  album as SchemaAlbum,
+  user as SchemaUser,
+  image_sets as SchemaImagesSets,
 } from "@prisma/client";
 import { MediaItemSearch } from "@/third-party/types.ts";
-export { SchemaImages, SchemaAlbum, SchemaUser };
+export { SchemaImages, SchemaAlbum, SchemaUser, SchemaImagesSets };
 
-export type ImageType = "today" | "similar";
+export type ImageType = "today" | "similar" | "oldest";
 
 export interface LoadImagesParams {
   access_token: string;
