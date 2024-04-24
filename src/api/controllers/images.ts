@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   checkValidBaseUrl,
   findImage,
+  sortImageSet,
   updateImagesByChoice,
 } from "@/services/images/images.ts";
 import { handleError } from "@/utils/index.ts";
@@ -56,6 +57,7 @@ export const ImagesController = Object.freeze({
       const updatedImage = await (async (): Promise<SchemaImages> => {
         if (!body) return currentImage;
         if (body.sorted_status === "keep" || body.sorted_status === "delete") {
+          await sortImageSet(appUser.id, currentImage);
           return await updateImagesByChoice(
             currentAlbum.id,
             body.sorted_status,

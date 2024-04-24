@@ -69,28 +69,47 @@ const identifyNewImagesSets = async (userId: number, data: QueryImageSets) => {
     .map(({ unsorted_image_ids }) => unsorted_image_ids)
     .flat();
 
-  // Add as newGroup if none of the current (new) group's unsorted_image_ids exist in existing image_ids
-  const newGroups = data.filter(
+  // Add as newImageSet if none of the current (new) group's unsorted_image_ids exist in existing image_ids
+  const newImageSets = data.filter(
     ({ unsorted_image_ids }) =>
-      !unsorted_image_ids.some((id) => {
-        return existingImageIds.includes(id);
-      }),
+      !unsorted_image_ids.some((id) => existingImageIds.includes(id)),
   );
 
-  return newGroups;
+  return newImageSets;
 };
 const sortSimilarImages = async (userId: number) => {
   console.info("getting similar image sets");
 
   const data = await prismaRawSql<QueryImageSets>(group_similar(userId));
 
-  const newGroups = await identifyNewImagesSets(userId, data);
+  const newImageSets = await identifyNewImagesSets(userId, data);
 
-  if (newGroups.length) {
+  if (newImageSets.length) {
     await prisma.image_sets.createMany({
-      data: newGroups.map((group) => ({ ...group, userId })),
+      data: newImageSets.map((group) => ({ ...group, userId })),
     });
+    const newlyCreatedImageSets = await prisma.image_sets.findMany({
+      where: {
+        userId,
+        minute: {
+          in: data.map(({ minute }) => minute),
+        },
+      },
+    });
+    console.info("updating images with respective image set ids");
+    for (const image_set of newlyCreatedImageSets) {
+      await prisma.images.updateMany({
+        where: {
+          userId,
+          id: {
+            in: image_set.unsorted_image_ids,
+          },
+        },
+        data: { image_set_id: image_set.id },
+      });
+    }
   }
+  console.info("updated images with respective image set ids");
   console.info("updated new image sets");
 };
 
@@ -372,4 +391,39 @@ const handleInvalidGoogleImageId = async (
   };
 
   await markGoogleDeletedImages();
+};
+
+export const sortImageSet = async (userId: number, image: SchemaImages) => {
+  if (!image.image_set_id) return;
+
+  console.info("updating image_set");
+  const existingImageSet = await prisma.image_sets.findUnique({
+    where: {
+      userId,
+      id: image.image_set_id,
+    },
+    select: {
+      unsorted_image_ids: true,
+    },
+  });
+
+  if (existingImageSet) {
+    const updatedUnsortedImageIds = existingImageSet.unsorted_image_ids.filter(
+      (id) => id !== image.id,
+    );
+
+    await prisma.image_sets.update({
+      where: {
+        userId,
+        id: image.image_set_id,
+      },
+      data: {
+        sorted_image_ids: {
+          push: image.id,
+        },
+        unsorted_image_ids: updatedUnsortedImageIds,
+      },
+    });
+  }
+  console.info("updated image_set");
 };
