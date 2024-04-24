@@ -13,39 +13,62 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                     Int       @id @default(autoincrement())
-  email                  String    @unique
-  googleId               String    @unique
-  googleProfilePicture   String    @unique
-  created_at             DateTime? @default(now())
-  images_last_updated_at DateTime? @db.Timestamptz(3)
-  images                 Images[]
-  album                  Album[]
+model user {
+  id                     Int          @id @default(autoincrement())
+  email                  String       @unique
+  googleId               String       @unique
+  googleProfilePicture   String       @unique
+  created_at             DateTime?    @default(now())
+  images_last_updated_at DateTime?    @db.Timestamptz(3)
+  images                 images[]
+  album                  album[]
+  image_sets             image_sets[]
+
+  @@map("User")
 }
 
-model Images {
-  id                   Int       @id @default(autoincrement())
-  googleId             String    @unique
+model images {
+  id                   Int         @id @default(autoincrement())
+  googleId             String      @unique
   mime_type            String?
-  user                 User      @relation(fields: [userId], references: [id])
+  user                 user        @relation(fields: [userId], references: [id])
   userId               Int
-  baseUrl              String?   @unique
-  baseUrl_last_updated DateTime? @db.Timestamptz(3)
-  productUrl           String?   @unique
+  baseUrl              String?     @unique
+  baseUrl_last_updated DateTime?   @db.Timestamptz(3)
+  productUrl           String?     @unique
   created_at           DateTime
-  updated_at           DateTime? @db.Timestamptz(3)
-  album                Album?    @relation(fields: [sorted_album_id], references: [id])
+  updated_at           DateTime?   @db.Timestamptz(3)
+  album                album?      @relation(fields: [sorted_album_id], references: [id])
   sorted_album_id      Int?
   sorted_status        String?
-  actually_deleted     DateTime? @db.Timestamptz(3)
+  actually_deleted     DateTime?   @db.Timestamptz(3)
+  image_set            image_sets? @relation(fields: [image_set_id], references: [id])
+  image_set_id         Int?
+
+  @@map("Images")
 }
 
-model Album {
+model image_sets {
+  id                 Int      @id @default(autoincrement())
+  minute             DateTime
+  user               user     @relation(fields: [userId], references: [id])
+  userId             Int
+  image_ids          Int[]
+  // move from on array to the other
+  unsorted_image_ids Int[]
+  sorted_image_ids   Int[]
+  images             images[]
+
+  @@map("Image_Sets")
+}
+
+model album {
   id         Int       @id @default(autoincrement())
-  user       User      @relation(fields: [userId], references: [id])
+  user       user      @relation(fields: [userId], references: [id])
   userId     Int
   created_at DateTime? @default(now()) @db.Timestamptz(3)
   title      String    @unique
-  images     Images[]
+  images     images[]
+
+  @@map("Album")
 }
