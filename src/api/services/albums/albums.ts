@@ -2,8 +2,14 @@ import { prisma } from "../../../loaders/prisma.ts";
 import { checkValidBaseUrl } from "@/services/images/images.ts";
 import { SchemaAlbum, SchemaImages } from "@/services/images/types.ts";
 
-export const findAlbums = async (userId: number) =>
-  await prisma.album.findMany({
+type SchemaAlbumWithCounts = SchemaAlbum & {
+  keepCount: number;
+  deleteCount: number;
+};
+export const findAlbums = async (
+  userId: number,
+): Promise<SchemaAlbumWithCounts[]> => {
+  const albums = await prisma.album.findMany({
     orderBy: {
       created_at: "desc",
     },
@@ -20,6 +26,32 @@ export const findAlbums = async (userId: number) =>
       },
     },
   });
+
+  const getCounts = async () => {
+    const withCounts: SchemaAlbumWithCounts[] = [];
+    for (const album of albums) {
+      const keepCount = await prisma.images.count({
+        where: {
+          sorted_album_id: album.id,
+          actually_deleted: null,
+          sorted_status: "keep",
+        },
+      });
+      const deleteCount = await prisma.images.count({
+        where: {
+          sorted_album_id: album.id,
+          actually_deleted: null,
+          sorted_status: "delete",
+        },
+      });
+      withCounts.push({ ...album, keepCount, deleteCount });
+    }
+    return withCounts;
+  };
+
+  const albumWithCounts = await getCounts();
+  return albumWithCounts;
+};
 
 export const findFirstImagesOfAlbums = async (
   albums: SchemaAlbum[],

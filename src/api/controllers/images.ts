@@ -7,7 +7,7 @@ import {
 } from "@/services/images/images.ts";
 import { handleError } from "@/utils/index.ts";
 import { getOrCreateCurrentAlbum } from "@/services/albums/albums.ts";
-import { SchemaImages } from "@/services/images/types.ts";
+import { ImageType, SchemaImages } from "@/services/images/types.ts";
 import { prisma } from "../../loaders/prisma.ts";
 import { queryByImageType } from "@/services/images/queries.ts";
 
@@ -18,9 +18,10 @@ export const ImagesController = Object.freeze({
         access_token,
         appUser: { id: userId },
       } = req.locals;
-      const { type } = req.query;
+      const { type }: { type?: ImageType } = req.query;
 
-      if (type !== "today" && type !== "similar") {
+      const filterOptions = ["today", "similar", "oldest"];
+      if (typeof type !== "string" || !filterOptions.includes(type)) {
         return res.send(400).json({ message: "Invalid type param" });
       }
       const images = await queryByImageType(type, userId);
