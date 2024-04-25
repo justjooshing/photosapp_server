@@ -49,7 +49,9 @@ const getOldestImages = async (userId: number) =>
       userId,
       updated_at: null,
       actually_deleted: null,
-      mime_type: "video/mp4",
+      mime_type: {
+        not: "video/mp4",
+      },
     },
     orderBy: [
       {
