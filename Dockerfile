@@ -6,6 +6,9 @@ FROM node:${NODE_VERSION}-slim as base
 
 LABEL fly_launch_runtime="Node.js/Prisma"
 
+# Set working directory
+WORKDIR /app
+
 # Set production environment
 ENV NODE_ENV="production"
 ARG YARN_VERSION=1.22.10
@@ -41,7 +44,9 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y openssl && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-COPY --from=build / /app
+# Copy from built application from first stage
+COPY . .
+COPY --from=base / ./dist
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
