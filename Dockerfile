@@ -6,9 +6,6 @@ FROM node:${NODE_VERSION}-slim as base
 
 LABEL fly_launch_runtime="Node.js/Prisma"
 
-# Node.js/Prisma app lives here
-WORKDIR /app
-
 # Set production environment
 ENV NODE_ENV="production"
 ARG YARN_VERSION=1.22.10
@@ -22,6 +19,9 @@ FROM base as build
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3
 
+# Install Typscript
+RUN npm install -g typescript
+
 # Install node modules
 COPY --link package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
@@ -33,7 +33,6 @@ RUN npx prisma generate
 # Copy application code
 COPY --link . .
 
-
 # Final stage for app image
 FROM base
 
@@ -42,8 +41,7 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y openssl && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Copy built application
-COPY --from=build /app /app
+COPY --from=build / /app
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000

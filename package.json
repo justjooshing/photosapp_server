@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx index.ts",
-    "start": "tsc && cd dist && node index.js",
+    "start": "tsc && tsc-alias && node dist/index.js",
     "lint": "yarn eslint . --fix"
   },
   "dependencies": {
@@ -36,6 +36,7 @@
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "prisma": "^5.12.1",
+    "tsc-alias": "^1.8.8",
     "tsx": "^4.7.1",
     "typescript": "^5.4.3",
     "typescript-eslint": "^7.3.1"
