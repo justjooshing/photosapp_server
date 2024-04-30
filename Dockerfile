@@ -13,7 +13,7 @@ WORKDIR /app
 ENV NODE_ENV="production"
 ARG YARN_VERSION=1.22.10
 RUN npm install -g yarn@$YARN_VERSION --force
-
+RUN npm i -g typescript
 
 # Throw-away build stage to reduce size of final image
 FROM base as build
@@ -22,19 +22,16 @@ FROM base as build
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3
 
-# Install Typscript
-RUN npm install -g typescript
-
 # Install node modules
-COPY --link package.json yarn.lock ./
+COPY package.json yarn.lock tsconfig.json ./
 RUN yarn install --frozen-lockfile
 
 # Generate Prisma Client
-COPY --link prisma .
+COPY prisma .
 RUN npx prisma generate
 
 # Copy application code
-COPY --link . .
+COPY . .
 
 # Final stage for app image
 FROM base
@@ -45,8 +42,7 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Copy from built application from first stage
-COPY . .
-COPY --from=base / ./dist
+COPY --from=build /app /dist
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
