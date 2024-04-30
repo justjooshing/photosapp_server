@@ -1,5 +1,5 @@
 import ky from "ky";
-import { UserData } from "@/services/user/types.ts";
+import { UserData } from "@/services/user/types.js";
 
 export const getGoogleUser = async (access_token: string) => {
   const client = ky.create({

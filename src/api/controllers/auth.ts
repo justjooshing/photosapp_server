@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { CONFIG, oauth2Client } from "../../config/index.ts";
+import { CONFIG, oauth2Client } from "../../config/index.js";
 import jwt from "jsonwebtoken";
-import { findOrCreateUser } from "@/services/user/user.ts";
-import { updateNewestImages } from "@/services/images/images.ts";
-import { getGoogleUser } from "@/third-party/user.ts";
-import { generateAccessToken } from "@/third-party/auth.ts";
-import { handleError } from "@/utils/index.ts";
+import { findOrCreateUser } from "@/services/user/user.js";
+import { updateNewestImages } from "@/services/images/images.js";
+import { getGoogleUser } from "@/third-party/user.js";
+import { generateAccessToken } from "@/third-party/auth.js";
+import { handleError } from "@/utils/index.js";
 
 export const AuthController = Object.freeze({
   appLogin: (_: Request, res: Response) => {
@@ -21,7 +21,7 @@ export const AuthController = Object.freeze({
     if (req.query.error || typeof req.query.code !== "string") {
       return res.status(400).redirect(CONFIG.clientUrl);
     }
-
+    console.log("handling google login", { code: req.query.code });
     try {
       const access_token = await generateAccessToken(req.query.code);
       if (!access_token) {

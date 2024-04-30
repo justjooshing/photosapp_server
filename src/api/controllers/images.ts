@@ -4,12 +4,12 @@ import {
   findImage,
   sortImageSet,
   updateImagesByChoice,
-} from "@/services/images/images.ts";
-import { handleError } from "@/utils/index.ts";
-import { getOrCreateCurrentAlbum } from "@/services/albums/albums.ts";
-import { ImageType, SchemaImages } from "@/services/images/types.ts";
-import { prisma } from "../../loaders/prisma.ts";
-import { queryByImageType } from "@/services/images/queries.ts";
+} from "@/services/images/images.js";
+import { handleError } from "@/utils/index.js";
+import { getOrCreateCurrentAlbum } from "@/services/albums/albums.js";
+import { ImageType, SchemaImages } from "@/services/images/types.js";
+import { prisma } from "../../loaders/prisma.js";
+import { queryByImageType } from "@/services/images/queries.js";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {

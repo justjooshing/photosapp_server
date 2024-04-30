@@ -1,4 +1,4 @@
-import { prisma } from "../../../loaders/prisma.ts";
+import { prisma } from "../../../loaders/prisma.js";
 
 const selectCountByColumn = async (userId: number, choice: "delete" | "keep") =>
   await prisma.images.count({

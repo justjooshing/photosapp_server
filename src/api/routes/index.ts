@@ -1,5 +1,5 @@
-export { images } from "./images.ts";
-export { login } from "./login.ts";
-export { albums } from "./albums.ts";
-export { count } from "./count.ts";
-export { user } from "./user.ts";
+export { images } from "./images.js";
+export { login } from "./login.js";
+export { albums } from "./albums.js";
+export { count } from "./count.js";
+export { user } from "./user.js";

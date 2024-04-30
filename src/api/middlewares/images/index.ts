@@ -1,5 +1,5 @@
-import { zImage, zImageId } from "@/schema/images.ts";
-import { handleError } from "@/utils/index.ts";
+import { zImage, zImageId } from "@/schema/images.js";
+import { handleError } from "@/utils/index.js";
 import { NextFunction, Request, Response } from "express";
 
 export const validateUpdateSingleImage = (

@@ -2,10 +2,10 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
 import cookies from "cookie-parser";
-import { routes } from "../api/index.ts";
-import { CONFIG } from "../config/index.ts";
-import { auth } from "../api/routes/auth.ts";
-import { MiddlewareProps } from "../api/services/images/types.ts";
+import { routes } from "../api/index.js";
+import { CONFIG } from "../config/index.js";
+import { auth } from "../api/routes/auth.js";
+import { MiddlewareProps } from "../api/services/images/types.js";
 
 export const expressSetup = (app: Express) => {
   app.use(cors());

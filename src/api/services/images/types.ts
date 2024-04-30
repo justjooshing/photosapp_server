@@ -4,7 +4,7 @@ import {
   user as SchemaUser,
   image_sets as SchemaImagesSets,
 } from "@prisma/client";
-import { MediaItemSearch } from "@/third-party/types.ts";
+import { MediaItemSearch } from "@/third-party/types.js";
 export { SchemaImages, SchemaAlbum, SchemaUser, SchemaImagesSets };
 
 export type ImageType = "today" | "similar" | "oldest";

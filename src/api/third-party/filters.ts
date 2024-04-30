@@ -1,4 +1,4 @@
-import { Filters } from "./types.ts";
+import { Filters } from "./types.js";
 
 export const todayFilter = (): Filters => {
   const currentDate = new Date();

@@ -5,9 +5,9 @@ import {
   findFirstImagesOfAlbums,
   selectAlbum,
   selectAlbumImages,
-} from "@/services/albums/albums.ts";
-import { checkValidBaseUrl } from "@/services/images/images.ts";
-import { handleError } from "@/utils/index.ts";
+} from "@/services/albums/albums.js";
+import { checkValidBaseUrl } from "@/services/images/images.js";
+import { handleError } from "@/utils/index.js";
 
 export const AlbumController = Object.freeze({
   returnAlbumWithFirstImages: async (req: Request, res: Response) => {

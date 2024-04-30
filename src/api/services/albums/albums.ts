@@ -1,6 +1,6 @@
-import { prisma } from "../../../loaders/prisma.ts";
-import { checkValidBaseUrl } from "@/services/images/images.ts";
-import { SchemaAlbum, SchemaImages } from "@/services/images/types.ts";
+import { prisma } from "../../../loaders/prisma.js";
+import { checkValidBaseUrl } from "@/services/images/images.js";
+import { SchemaAlbum, SchemaImages } from "@/services/images/types.js";
 
 type SchemaAlbumWithCounts = SchemaAlbum & {
   keepCount: number;

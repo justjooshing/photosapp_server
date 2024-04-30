@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx index.ts",
-    "start": "npx tsc && cd dist && node index.js",
+    "start": "tsc && cd dist && node index.js",
     "lint": "yarn eslint . --fix"
   },
   "dependencies": {

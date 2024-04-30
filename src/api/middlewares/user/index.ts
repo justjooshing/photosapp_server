@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { findUser } from "@/services/user/user.ts";
-import { getGoogleUser } from "@/third-party/user.ts";
+import { findUser } from "@/services/user/user.js";
+import { getGoogleUser } from "@/third-party/user.js";
 
 export const getUserData = async (
   req: Request,

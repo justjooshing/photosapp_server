@@ -4,19 +4,19 @@ import {
   SchemaImages,
   SchemaImagesSets,
   SchemaUser,
-} from "./types.ts";
-import { newestImagesFilter } from "@/third-party/filters.ts";
-import { prisma } from "../../../loaders/prisma.ts";
-import { baseBodyParams, handleGetImages } from "@/third-party/images.ts";
+} from "./types.js";
+import { newestImagesFilter } from "@/third-party/filters.js";
+import { prisma } from "../../../loaders/prisma.js";
+import { baseBodyParams, handleGetImages } from "@/third-party/images.js";
 import {
   MediaItemResultsImages,
   Images,
   MediaItemResultError,
   MediaItemResultSuccess,
-} from "@/third-party/types.ts";
-import { group_similar } from "./queries.ts";
-import { prismaRawSql } from "@/utils/index.ts";
-import { updateUserLastUpdate } from "@/services/user/user.ts";
+} from "@/third-party/types.js";
+import { group_similar } from "./queries.js";
+import { prismaRawSql } from "@/utils/index.js";
+import { updateUserLastUpdate } from "@/services/user/user.js";
 
 export const loadImageSet = async ({
   access_token,
