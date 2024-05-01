@@ -30,15 +30,6 @@ COPY package.json yarn.lock ./
 # Install dependencies
 RUN yarn
 
-ARG DATABASE_URL='soup'
-
-# RUN --mount=type=secret,id=db_url \
-#     cat /run/secrets/github_token
-RUN echo "$(cat /run/secrets)"
-RUN echo $(cat /run/secrets)
-
-RUN echo 'test' $DATABASE_URL $db_url
-
 # Generate Prisma Client
 COPY prisma ./prisma
 RUN npx prisma generate

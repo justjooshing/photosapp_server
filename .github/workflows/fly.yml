@@ -5,7 +5,6 @@ on:
       - master # change to main if needed
 env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-  db_url: hello
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
 jobs:
   deploy:
