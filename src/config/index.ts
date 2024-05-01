@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 import { google } from "googleapis";
 dotenv.config();
 
+const port = 8080;
 const baseURL = "https://photosappserver.fly.dev";
 const clientUrl = "http://localhost:8081/";
 
@@ -12,6 +13,7 @@ export const CONFIG = {
     base: baseURL,
     prefix: "/api",
   },
+  port,
   oauth2Credentials: {
     client_id: process.env.GOOGLE_CLIENT_ID as string,
     project_id: "PhotosApp",
