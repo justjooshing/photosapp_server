@@ -22,13 +22,22 @@ FROM base as build
 
 # Install build dependencies
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3
+apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3
 
 # Copy only necessary files for installing dependencies
 COPY package.json yarn.lock ./
 
 # Install dependencies
 RUN yarn
+
+ARG DATABASE_URL='soup'
+
+# RUN --mount=type=secret,id=db_url \
+#     cat /run/secrets/github_token
+RUN echo "$(cat /run/secrets)"
+RUN echo $(cat /run/secrets)
+
+RUN echo 'test' $DATABASE_URL $db_url
 
 # Generate Prisma Client
 COPY prisma ./prisma

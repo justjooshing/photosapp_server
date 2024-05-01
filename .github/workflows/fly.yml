@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - master # change to main if needed
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  db_url: hello
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
 jobs:
   deploy:
     name: Deploy app
@@ -11,6 +15,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - run: flyctl deploy --remote-only --build-secret DATABASE_URL=potato
