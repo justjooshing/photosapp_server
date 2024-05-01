@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { handleError } from "@/utils/index.js";
 
 export const checkJWT = (req: Request, res: Response, next: NextFunction) => {
+  console.log("checking jwt");
   try {
     const token = getTokenFromHeader(req);
     const verifiedToken = jwt.verify(token, CONFIG.JWTsecret, {

@@ -21,7 +21,6 @@ export const AuthController = Object.freeze({
     if (req.query.error || typeof req.query.code !== "string") {
       return res.status(400).redirect(CONFIG.clientUrl);
     }
-    console.log("handling google login", { code: req.query.code });
     try {
       const access_token = await generateAccessToken(req.query.code);
       if (!access_token) {
@@ -30,7 +29,9 @@ export const AuthController = Object.freeze({
       const user = await getGoogleUser(access_token);
       const appUser = await findOrCreateUser(user);
       updateNewestImages(access_token, appUser);
-      res.cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret));
+      res.cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret), {
+        secure: false,
+      });
       res.redirect(CONFIG.clientUrl);
     } catch (err) {
       handleError({
