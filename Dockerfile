@@ -27,8 +27,6 @@ RUN apt-get update -qq && \
 # Copy only necessary files for installing dependencies
 COPY package.json yarn.lock ./
 
-RUN ls
-
 # Install dependencies
 RUN yarn
 
@@ -56,7 +54,6 @@ RUN apt-get update -qq && \
 # Set working directory
 WORKDIR /app
 
-RUN ls
 # Copy built application from build stage
 COPY --from=build /app .
 
