@@ -108,8 +108,8 @@ const sortSimilarImages = async (userId: number) => {
         data: { image_set_id: image_set.id },
       });
     }
+    console.info("updated images with respective image set ids");
   }
-  console.info("updated images with respective image set ids");
   console.info("updated new image sets");
 };
 
