@@ -4,7 +4,7 @@ dotenv.config();
 
 const port = 8080;
 const baseURL = "https://photosappserver.fly.dev";
-const clientUrl = "http://localhost:8081/";
+const clientUrl = "com.justjooshing.photosapp://expo-development-client";
 
 export const CONFIG = {
   JWTsecret: process.env.JWT_SECRET as string,
