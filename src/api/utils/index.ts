@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../loaders/prisma.js";
 import { Response } from "express";
+import { CONFIG } from "../../config/index.js";
 
 export const prismaRawSql = async <SchemaType>(sqlQuery: Prisma.Sql) =>
   await prisma.$queryRaw<SchemaType>(sqlQuery);
@@ -20,4 +21,24 @@ export const handleError = ({
   } else {
     res.status(500).json({ message: "Something went wrong" });
   }
+};
+
+type StaticOrigin =
+  | boolean
+  | string
+  | RegExp
+  | Array<boolean | string | RegExp>;
+type CustomOrigin = {
+  requestOrigin: string | undefined;
+  callback: (err: Error | null, origin?: StaticOrigin) => void;
+};
+
+export const handleCorsOrigin = (
+  origin: CustomOrigin["requestOrigin"],
+  callback: CustomOrigin["callback"],
+) => {
+  if (!origin || CONFIG.whiteListUrls.indexOf(origin) === -1) {
+    return callback(new Error("Not allowed by CORS"));
+  }
+  return callback(null, true);
 };

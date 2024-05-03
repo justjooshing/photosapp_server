@@ -3,12 +3,18 @@ import { google } from "googleapis";
 dotenv.config();
 
 const port = 8080;
-const baseURL = "https://photosappserver.fly.dev";
-const clientUrl = "com.justjooshing.photosapp://expo-development-client";
+const baseURL = process.env.SERVER_URI;
+
+const whiteListUrls = [
+  "com.justjooshing.photosapp://expo-development-client",
+  "http://localhost:8081",
+  "192.168.1.*",
+];
 
 export const CONFIG = {
   JWTsecret: process.env.JWT_SECRET as string,
-  clientUrl,
+  whiteListUrls,
+  redirect_uri: process.env.REDIRECT_URI as string,
   api: {
     base: baseURL,
     prefix: "/api",

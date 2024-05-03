@@ -6,9 +6,10 @@ import { routes } from "../api/index.js";
 import { CONFIG } from "../config/index.js";
 import { auth } from "../api/routes/auth.js";
 import { MiddlewareProps } from "../api/services/images/types.js";
+import { handleCorsOrigin } from "@/utils/index.js";
 
 export const expressSetup = (app: Express) => {
-  app.use(cors());
+  app.use(cors({ origin: handleCorsOrigin }));
   app.use(express.json());
   app.use(cookies());
   app.use(bodyParser.urlencoded({ extended: true }));

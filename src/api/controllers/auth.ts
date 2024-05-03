@@ -18,8 +18,12 @@ export const AuthController = Object.freeze({
     res.status(200).json({ loginLink });
   },
   handleGoogleLogin: async (req: Request, res: Response) => {
+    const redirect_uri = CONFIG.redirect_uri;
+    if (!redirect_uri) {
+      return res.status(400);
+    }
     if (req.query.error || typeof req.query.code !== "string") {
-      return res.status(400).redirect(CONFIG.clientUrl);
+      return res.status(400).redirect(redirect_uri);
     }
     try {
       const access_token = await generateAccessToken(req.query.code);
@@ -32,12 +36,12 @@ export const AuthController = Object.freeze({
       res.cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret), {
         secure: false,
       });
-      res.redirect(CONFIG.clientUrl);
+      res.redirect(redirect_uri);
     } catch (err) {
       handleError({
         error: { from: "Auth", err },
         res,
-        callback: () => res.status(500).redirect(CONFIG.clientUrl),
+        callback: () => res.status(500).redirect(redirect_uri),
       });
     }
   },
