@@ -37,8 +37,9 @@ export const handleCorsOrigin = (
   origin: CustomOrigin["requestOrigin"],
   callback: CustomOrigin["callback"],
 ) => {
-  if (!origin || CONFIG.whiteListUrls.indexOf(origin) === -1) {
-    return callback(new Error("Not allowed by CORS"));
+  if (!origin || CONFIG.whiteListUrls.indexOf(origin) !== -1) {
+    return callback(null, true);
   }
-  return callback(null, true);
+  console.error({ origin });
+  return callback(new Error("Not allowed by CORS"));
 };
