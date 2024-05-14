@@ -427,3 +427,18 @@ export const sortImageSet = async (userId: number, image: SchemaImages) => {
   }
   console.info("updated image_set");
 };
+
+const selectCountByColumn = async (userId: number, choice: "delete" | "keep") =>
+  await prisma.images.count({
+    where: {
+      userId,
+      sorted_status: choice,
+    },
+  });
+
+export const getSortCounts = async (userId: number) => {
+  const deletedCount = await selectCountByColumn(userId, "delete");
+  const sortedCount = await selectCountByColumn(userId, "keep");
+
+  return { deletedCount, sortedCount };
+};

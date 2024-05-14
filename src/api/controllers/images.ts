@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   checkValidBaseUrl,
   findImage,
+  getSortCounts,
   sortImageSet,
   updateImagesByChoice,
 } from "@/services/images/images.js";
@@ -86,6 +87,19 @@ export const ImagesController = Object.freeze({
         res,
         callback: () =>
           res.status(500).json({ message: "Error updating image" }),
+      });
+    }
+  },
+  getSortCounts: async (req: Request, res: Response) => {
+    try {
+      const counts = await getSortCounts(req.locals.appUser.id);
+      res.status(200).json({ counts });
+    } catch (err) {
+      handleError({
+        error: { from: "Counts", err },
+        res,
+        callback: () =>
+          res.status(500).json({ message: "Error fetching counts" }),
       });
     }
   },
