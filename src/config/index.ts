@@ -27,7 +27,7 @@ export const CONFIG = {
     token_uri: "https://oauth2.googleapis.com/token",
     auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
     client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
-    redirect_uris: [`${baseURL}/auth/google/callback`],
+    redirect_uris: [`${baseURL}/api/auth/google/callback`],
     // https://developers.google.com/photos/library/reference/rest/v1/albums/create
     // https://developers.google.com/photos/library/reference/rest/v1/mediaItems
     // albums.create
