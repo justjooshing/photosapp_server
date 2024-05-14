@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { AlbumController } from "@/controllers/albums.js";
 
-const route = Router();
-
 export const albums = (app: Router) => {
-  app.use("/albums", route);
+  const route = Router();
+
   route.get("/", AlbumController.returnAlbumWithFirstImages);
   route.get("/:albumId", AlbumController.getImagesFromSpecificAlbum);
+
+  app.use("/albums", route);
 };

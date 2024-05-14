@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { UserController } from "@/controllers/user.js";
 
-const route = Router();
 export const user = (app: Router) => {
-  app.use("/user", route);
+  const route = Router();
+
   route.get("/", UserController.getUser);
+  route.delete("/", UserController.deleteUser);
+
+  app.use("/user", route);
 };

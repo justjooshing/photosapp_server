@@ -1,17 +1,19 @@
 import { Router } from "express";
 import { AuthController } from "@/controllers/auth.js";
 
-const route = Router();
-
 export const auth_unprotected = (app: Router) => {
-  app.use("/auth", route);
+  const unprotectedRoute = Router();
 
-  route.get("/google/callback", AuthController.handleGoogleLogin);
-  route.get("/login-link", AuthController.appLogin);
+  unprotectedRoute.get("/google/callback", AuthController.handleGoogleLogin);
+  unprotectedRoute.get("/login-link", AuthController.appLogin);
+
+  app.use("/auth", unprotectedRoute);
 };
 
 export const auth_protected = (app: Router) => {
-  app.use("/auth", route);
+  const protectedRoute = Router();
 
-  route.delete("/login-link", AuthController.appLogout);
+  protectedRoute.delete("/login-link", AuthController.appLogout);
+
+  app.use("/auth", protectedRoute);
 };
