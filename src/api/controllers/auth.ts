@@ -18,9 +18,9 @@ export const AuthController = Object.freeze({
 
     res.status(200).json({ loginLink });
   },
-  appLogout: (req: Request, res: Response) => {
+  appLogout: async (req: Request, res: Response) => {
     try {
-      oauth2Client.revokeToken(req.locals.access_token);
+      await oauth2Client.revokeToken(req.locals.access_token);
       res.status(204).cookie("jwt", undefined).end();
     } catch (err) {
       handleError({
