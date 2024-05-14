@@ -9,6 +9,7 @@ const whiteListUrls = [
   "com.justjooshing.photosapp://expo-development-client",
   "http://localhost:8081",
   "192.168.1.*",
+  "https://www.picpurge.app",
 ];
 
 export const CONFIG = {
