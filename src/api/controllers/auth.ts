@@ -7,18 +7,30 @@ import { getGoogleUser } from "@/third-party/user.js";
 import { generateAccessToken } from "@/third-party/auth.js";
 import { handleError } from "@/utils/index.js";
 
+const redirect_uri = CONFIG.redirect_uri;
+
 export const AuthController = Object.freeze({
   appLogin: (_: Request, res: Response) => {
     const loginLink = oauth2Client.generateAuthUrl({
       access_type: "offline",
       scope: CONFIG.oauth2Credentials.scopes,
-      login_hint: "consent",
     });
 
     res.status(200).json({ loginLink });
   },
+  appLogout: (req: Request, res: Response) => {
+    try {
+      oauth2Client.revokeToken(req.locals.access_token);
+      res.status(204).cookie("jwt", undefined).end();
+    } catch (err) {
+      handleError({
+        error: { from: "logout", err },
+        res,
+        callback: () => res.status(500).redirect(redirect_uri),
+      });
+    }
+  },
   handleGoogleLogin: async (req: Request, res: Response) => {
-    const redirect_uri = CONFIG.redirect_uri;
     if (!redirect_uri) {
       return res.status(400);
     }
