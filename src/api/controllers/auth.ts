@@ -44,13 +44,15 @@ export const AuthController = Object.freeze({
       if (!access_token) {
         throw new Error("No access token");
       }
+      console.log("got access token, checking user");
       const user = await getGoogleUser(access_token);
       const appUser = await findOrCreateUser(user);
       updateNewestImages(access_token, appUser);
-      res.cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret), {
-        secure: false,
-      });
-      res.redirect(redirect_uri);
+      console.log("setting cookie");
+      console.log(`redirecting to ${redirect_uri}`);
+      res
+        .cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret))
+        .redirect(redirect_uri);
     } catch (err) {
       handleError({
         error: { from: "Auth", err },
