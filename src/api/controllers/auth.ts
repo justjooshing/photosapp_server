@@ -51,7 +51,9 @@ export const AuthController = Object.freeze({
       console.log("setting cookie");
       console.log(`redirecting to ${redirect_uri}`);
       res
-        .cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret))
+        .cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret), {
+          secure: false,
+        })
         .redirect(redirect_uri);
     } catch (err) {
       handleError({
