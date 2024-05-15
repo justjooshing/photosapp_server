@@ -32,9 +32,11 @@ export const AuthController = Object.freeze({
   },
   handleGoogleLogin: async (req: Request, res: Response) => {
     if (!redirect_uri) {
-      return res.status(400);
+      console.log("no redirect uri");
+      return res.status(400).end();
     }
     if (req.query.error || typeof req.query.code !== "string") {
+      console.log("error", req.query.error || "none", typeof req.query.code);
       return res.status(400).redirect(redirect_uri);
     }
     try {
