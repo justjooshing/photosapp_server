@@ -21,7 +21,7 @@ export const AuthController = Object.freeze({
   appLogout: async (req: Request, res: Response) => {
     try {
       await oauth2Client.revokeToken(req.locals.access_token);
-      res.status(204).cookie("jwt", undefined).end();
+      res.status(204).end();
     } catch (err) {
       handleError({
         error: { from: "logout", err },
@@ -32,11 +32,9 @@ export const AuthController = Object.freeze({
   },
   handleGoogleLogin: async (req: Request, res: Response) => {
     if (!redirect_uri) {
-      console.log("no redirect uri");
       return res.status(400).end();
     }
     if (req.query.error || typeof req.query.code !== "string") {
-      console.log("error", req.query.error || "none", typeof req.query.code);
       return res.status(400).redirect(redirect_uri);
     }
     try {
@@ -44,17 +42,13 @@ export const AuthController = Object.freeze({
       if (!access_token) {
         throw new Error("No access token");
       }
-      console.log("got access token, checking user");
       const user = await getGoogleUser(access_token);
       const appUser = await findOrCreateUser(user);
       updateNewestImages(access_token, appUser);
-      console.log("setting cookie");
-      console.log(`redirecting to ${redirect_uri}`);
-      res
-        .cookie("jwt", jwt.sign(access_token, CONFIG.JWTsecret), {
-          secure: false,
-        })
-        .redirect(redirect_uri);
+      const token = jwt.sign(access_token, CONFIG.JWTsecret);
+      const uri = new URL(redirect_uri);
+      uri.searchParams.append("jwt", token);
+      res.redirect(uri.toString());
     } catch (err) {
       handleError({
         error: { from: "Auth", err },

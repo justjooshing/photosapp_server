@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 import { handleError } from "@/utils/index.js";
 
 export const checkJWT = (req: Request, res: Response, next: NextFunction) => {
-  console.log("checking jwt");
   try {
     const token = getTokenFromHeader(req);
     const verifiedToken = jwt.verify(token, CONFIG.JWTsecret, {
@@ -18,11 +17,7 @@ export const checkJWT = (req: Request, res: Response, next: NextFunction) => {
     handleError({
       error: { from: "JWT", err },
       res,
-      callback: () =>
-        res
-          .cookie("jwt", undefined)
-          .status(401)
-          .json({ message: "Auth issue" }),
+      callback: () => res.status(401).json({ message: "Auth issue" }),
     });
   }
 };
