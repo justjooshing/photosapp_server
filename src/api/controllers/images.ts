@@ -28,7 +28,7 @@ export const ImagesController = Object.freeze({
       const images = await queryByImageType(type, userId);
       const withUrls = await checkValidBaseUrl(access_token, images);
 
-      return res.status(200).json({ imageUrls: withUrls });
+      return res.status(200).json(withUrls);
     } catch (err) {
       handleError({
         error: { from: "Getting images", err },
