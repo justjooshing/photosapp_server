@@ -1,6 +1,7 @@
 import { prisma } from "../../../loaders/prisma.js";
 import { checkValidBaseUrl } from "@/services/images/images.js";
 import { SchemaAlbum, SchemaImages } from "@/services/images/types.js";
+import { Prisma } from "@prisma/client";
 
 type SchemaAlbumWithCounts = SchemaAlbum & {
   keepCount: number;
@@ -59,9 +60,14 @@ export const findFirstImagesOfAlbums = async (
   const firstImages = new Map<number, SchemaImages>();
 
   for (const album of albums) {
-    const firstImage = await prisma.images.findFirst({
+    const firstImageProps = ({
+      sorted_status,
+    }: {
+      sorted_status: SchemaImages["sorted_status"];
+    }): Prisma.imagesFindFirstArgs => ({
       orderBy: [{ created_at: "asc" }],
       where: {
+        sorted_status,
         sorted_album_id: album.id,
         actually_deleted: null,
         mime_type: {
@@ -70,8 +76,18 @@ export const findFirstImagesOfAlbums = async (
       },
     });
 
-    if (firstImage) {
-      firstImages.set(album.id, firstImage);
+    const firstDeletedImage = await prisma.images.findFirst(
+      firstImageProps({ sorted_status: "delete" }),
+    );
+    if (firstDeletedImage) {
+      firstImages.set(album.id, firstDeletedImage);
+    } else {
+      const firstImage = await prisma.images.findFirst(
+        firstImageProps({ sorted_status: "keep" }),
+      );
+      if (firstImage) {
+        firstImages.set(album.id, firstImage);
+      }
     }
   }
   return firstImages;
