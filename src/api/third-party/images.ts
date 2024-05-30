@@ -39,7 +39,8 @@ export const handleGetImages = async <
 
 export const getImageSize = async (access_token: string, baseUrl: string) => {
   try {
-    const imageSize = await ky.head(baseUrl, {
+    // =d param is to get download quality rather than compressed
+    const imageSize = await ky.head(`${baseUrl}=d`, {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
