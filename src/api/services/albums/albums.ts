@@ -1,6 +1,10 @@
 import { prisma } from "../../../loaders/prisma.js";
 import { checkValidBaseUrl } from "@/services/images/images.js";
-import { SchemaAlbum, SchemaImages } from "@/services/images/types.js";
+import {
+  ApiImages,
+  SchemaAlbum,
+  SchemaImages,
+} from "@/services/images/types.js";
 import { Prisma } from "@prisma/client";
 
 type SchemaAlbumWithCounts = SchemaAlbum & {
@@ -98,14 +102,21 @@ export const appendImagesWithFreshUrls = async (
   firstImages: Map<number, SchemaImages>,
   albums: SchemaAlbum[],
 ) => {
-  const imagesWithUrls = await checkValidBaseUrl(access_token, [
-    ...firstImages.values(),
-  ]);
+  const imagesWithUrls = await checkValidBaseUrl(
+    access_token,
+    Array.from(firstImages.values()),
+  );
+
+  const imagesMap = new Map<string, ApiImages>();
+
+  for (const image of imagesWithUrls) {
+    if (image.sorted_album_id) {
+      imagesMap.set(image.sorted_album_id?.toString(), image);
+    }
+  }
 
   const albumsWithPhotoUrls = albums.map((album) => {
-    const matchingImage = imagesWithUrls.find(
-      ({ sorted_album_id }) => sorted_album_id === album.id,
-    );
+    const matchingImage = imagesMap.get(album.id.toString());
 
     return {
       ...album,
