@@ -46,12 +46,13 @@ export const loadImageSet = async ({
       if (data.mediaItems) {
         images.push(...data.mediaItems);
       }
-
+      const countLabel = "fetching next page";
       if (data.nextPageToken) {
-        console.count("fetching next page");
+        console.count(countLabel);
         await fetchAllImages(data.nextPageToken);
       } else {
         console.info("no more pages");
+        console.countReset(countLabel);
         return;
       }
     };
@@ -232,10 +233,11 @@ export const updateImageSizes = async (
     );
 
     if (imageSizes?.length) {
+      const countLabel = `Updating image size ${imageSizes.length}`;
       for (const image of imageSizes) {
         if (image?.baseUrl && image.size) {
           //Need to make these more performant - raw sql/prisma.$transactions?
-          console.count(`Updating image size ${imageSizes.length}`);
+          console.count(countLabel);
           await prisma.images.update({
             where: {
               baseUrl: image.baseUrl,
@@ -246,6 +248,7 @@ export const updateImageSizes = async (
           });
         }
       }
+      console.countReset(countLabel);
     }
     console.log("last image updated size");
   }
@@ -257,14 +260,16 @@ export const concurrentlyGetImagesSizes = async (
 ) => {
   try {
     const limit = pLimit(50);
+    const countLabel = `concurrent requests of ${images.length}`;
     const promises = images.map(({ baseUrl }) => {
       if (baseUrl) {
         return limit(() => {
-          console.count(`concurrent requests of ${images.length}`);
+          console.count(countLabel);
           return getImageSize(access_token, baseUrl);
         });
       }
     });
+    console.countReset(countLabel);
 
     const results = await Promise.all(promises);
     return results.filter((res) => !!res);
@@ -376,8 +381,9 @@ export const addFreshBaseUrls = async (
     }
 
     const response = [];
+    const countLabel = `updating image of ${refreshedImages.size}`;
     for (const image of refreshedImages.values()) {
-      console.count(`updating image of ${refreshedImages.size}`);
+      console.count(countLabel);
       const saved = await prisma.images.update({
         where: {
           googleId: image.id,
@@ -392,6 +398,7 @@ export const addFreshBaseUrls = async (
       });
       response.push(saved);
     }
+    console.countReset(countLabel);
     return response;
   } catch (err) {
     console.error(err);
