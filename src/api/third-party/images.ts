@@ -36,3 +36,18 @@ export const handleGetImages = async <
   });
   return await res.json<ImageResponseType>();
 };
+
+export const getImageSize = async (access_token: string, baseUrl: string) => {
+  try {
+    const imageSize = await ky.head(baseUrl, {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    });
+    const firstImageSize = imageSize.headers.get("Content-Length");
+    return { baseUrl, size: Number(firstImageSize) };
+  } catch (err) {
+    console.count("getImageSize error");
+    console.log("errored url", baseUrl);
+  }
+};

@@ -7,7 +7,11 @@ import {
 } from "./types.js";
 import { newestImagesFilter } from "@/third-party/filters.js";
 import { prisma } from "../../../loaders/prisma.js";
-import { baseBodyParams, handleGetImages } from "@/third-party/images.js";
+import {
+  baseBodyParams,
+  getImageSize,
+  handleGetImages,
+} from "@/third-party/images.js";
 import {
   MediaItemResultsImages,
   Images,
@@ -17,6 +21,7 @@ import {
 import { group_similar } from "./queries.js";
 import { prismaRawSql } from "@/utils/index.js";
 import { updateUserLastUpdate } from "@/services/user/user.js";
+import pLimit from "p-limit";
 
 export const loadImageSet = async ({
   access_token,
@@ -205,6 +210,69 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
   }
 };
 
+export const updateImageSizes = async (
+  access_token: string,
+  userId: number,
+) => {
+  const images = await prisma.images.findMany({
+    where: {
+      userId,
+      size: null,
+      actually_deleted: null,
+    },
+  });
+
+  // refresh baseURLs to be sure we can request them
+  if (images.length) {
+    const withBaseURLs = await checkValidBaseUrl(access_token, images);
+    console.log("updated all base urls for images missing sizes");
+    const imageSizes = await concurrentlyGetImagesSizes(
+      access_token,
+      withBaseURLs,
+    );
+
+    if (imageSizes?.length) {
+      for (const image of imageSizes) {
+        if (image?.baseUrl && image.size) {
+          //Need to make these more performant - raw sql/prisma.$transactions?
+          console.count(`Updating image size ${imageSizes.length}`);
+          await prisma.images.update({
+            where: {
+              baseUrl: image.baseUrl,
+            },
+            data: {
+              size: image.size,
+            },
+          });
+        }
+      }
+    }
+    console.log("last image updated size");
+  }
+};
+
+export const concurrentlyGetImagesSizes = async (
+  access_token: string,
+  images: ApiImages[],
+) => {
+  try {
+    const limit = pLimit(50);
+    const promises = images.map(({ baseUrl }) => {
+      if (baseUrl) {
+        return limit(() => {
+          console.count(`concurrent requests of ${images.length}`);
+          return getImageSize(access_token, baseUrl);
+        });
+      }
+    });
+
+    const results = await Promise.all(promises);
+    return results.filter((res) => !!res);
+  } catch (err) {
+    console.log("err", err);
+  }
+};
+
 export const checkValidBaseUrl = async (
   access_token: string,
   images: SchemaImages[],
@@ -255,76 +323,76 @@ export const addFreshBaseUrls = async (
 ): Promise<SchemaImages[]> => {
   console.info("adding fresh baseURLs");
   try {
-    const mediaItemIds = new URLSearchParams();
+    const mappedImages = new Map<string, SchemaImages>();
     for (const image of images) {
-      mediaItemIds.append("mediaItemIds", image.googleId);
+      mappedImages.set(image.googleId, image);
     }
-    // The image might not exist anymore, so potentially delete DB entry on specific error?
-    const data = await handleGetImages<MediaItemResultsImages>({
-      access_token,
-      options: {
-        method: ":batchGet",
-        searchParams: mediaItemIds,
-      },
-    });
 
-    const { erroredImages, refreshedImages } = data.mediaItemResults.reduce(
-      (
-        acc: {
-          erroredImages: MediaItemResultError[];
-          refreshedImages: MediaItemResultSuccess[];
+    const erroredImages: MediaItemResultError[] = [];
+    const refreshedImages = new Map<
+      string,
+      MediaItemResultSuccess["mediaItem"]
+    >();
+
+    const dataset = Array.from(mappedImages.values());
+    while (dataset.length) {
+      // Chunk requests into sets of 50 mediaItemIds
+      const chunk = dataset.splice(0, 50);
+      console.log(
+        "requesting chunk",
+        `data remaining: ${dataset.length}`,
+        `errored urls: ${erroredImages.length}`,
+        `refreshed urls: ${refreshedImages.size}`,
+      );
+      const mediaItemIds = new URLSearchParams();
+      for (const image of chunk) {
+        mediaItemIds.append("mediaItemIds", image.googleId);
+      }
+      const data = await handleGetImages<MediaItemResultsImages>({
+        access_token,
+        options: {
+          method: ":batchGet",
+          searchParams: mediaItemIds,
         },
-        curr,
-      ) => {
-        if ("status" in curr) {
-          acc.erroredImages.push(curr);
+      });
+
+      data.mediaItemResults.forEach((item) => {
+        if ("status" in item) {
+          erroredImages.push(item);
         } else {
-          acc.refreshedImages.push(curr);
+          refreshedImages.set(item.mediaItem.id, item.mediaItem);
         }
-        return acc;
-      },
-      {
-        erroredImages: [],
-        refreshedImages: [],
-      },
+      });
+    }
+    console.log(
+      "finished requesting all base URLs",
+      dataset.length,
+      erroredImages.length,
+      refreshedImages.size,
     );
 
     if (erroredImages.length) {
       await handleInvalidGoogleImageId(images, erroredImages);
     }
 
-    const updatedImages = images.reduce(
-      // Find existing image and add baseUrl id onto it
-      (accImages: SchemaImages[], currImage) => {
-        const matchingImage = refreshedImages.find((i) => {
-          if ("mediaItem" in i) return i.mediaItem.id === currImage.googleId;
-        });
-        if (matchingImage && "mediaItem" in matchingImage) {
-          accImages.push({
-            ...currImage,
-            baseUrl: matchingImage.mediaItem.baseUrl,
-            productUrl: matchingImage.mediaItem.productUrl,
-          });
-        }
-        return accImages;
-      },
-      [],
-    );
-
-    for (const image of updatedImages) {
-      await prisma.images.update({
+    const response = [];
+    for (const image of refreshedImages.values()) {
+      console.count(`updating image of ${refreshedImages.size}`);
+      const saved = await prisma.images.update({
         where: {
-          id: image.id,
+          googleId: image.id,
         },
         data: {
           baseUrl: image.baseUrl,
           baseUrl_last_updated: new Date(),
-          ...(!image.productUrl && { productUrl: image.productUrl }),
+          ...(!image.productUrl && {
+            productUrl: image.productUrl,
+          }),
         },
       });
+      response.push(saved);
     }
-
-    return updatedImages;
+    return response;
   } catch (err) {
     console.error(err);
     return [];
@@ -391,6 +459,7 @@ const handleInvalidGoogleImageId = async (
   };
 
   await markGoogleDeletedImages();
+  console.log("Handled invalid google image ids");
 };
 
 export const sortImageSet = async (userId: number, image: SchemaImages) => {

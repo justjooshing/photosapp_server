@@ -2,7 +2,10 @@ import { Request, Response } from "express";
 import { CONFIG, oauth2Client } from "../../config/index.js";
 import jwt from "jsonwebtoken";
 import { findOrCreateUser } from "@/services/user/user.js";
-import { updateNewestImages } from "@/services/images/images.js";
+import {
+  updateImageSizes,
+  updateNewestImages,
+} from "@/services/images/images.js";
 import { getGoogleUser } from "@/third-party/user.js";
 import { generateAccessToken } from "@/third-party/auth.js";
 import { handleError } from "@/utils/index.js";
@@ -45,6 +48,7 @@ export const AuthController = Object.freeze({
       const user = await getGoogleUser(access_token);
       const appUser = await findOrCreateUser(user);
       updateNewestImages(access_token, appUser);
+      updateImageSizes(access_token, appUser.id);
       const token = jwt.sign(access_token, CONFIG.JWTsecret);
       const uri = new URL(redirect_uri);
       uri.searchParams.append("jwt", token);
