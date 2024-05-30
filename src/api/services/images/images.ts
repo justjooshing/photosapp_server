@@ -428,12 +428,14 @@ export const shapeImagesResponse = ({
   id,
   sorted_status,
   sorted_album_id,
+  size,
 }: SchemaImages): ApiImages => ({
   sorted_status,
   sorted_album_id,
   baseUrl,
   productUrl,
   id,
+  size: size ? size.toString() : null,
 });
 
 const handleInvalidGoogleImageId = async (

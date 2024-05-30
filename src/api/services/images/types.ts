@@ -31,7 +31,7 @@ export interface HandleGetImages {
 export type ApiImages = Pick<
   SchemaImages,
   "sorted_status" | "sorted_album_id" | "baseUrl" | "productUrl" | "id"
->;
+> & { size: string | null };
 
 export interface MiddlewareProps {
   access_token: string;
