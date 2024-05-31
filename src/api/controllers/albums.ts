@@ -8,6 +8,7 @@ import {
 } from "@/services/albums/albums.js";
 import { checkValidBaseUrl } from "@/services/images/images.js";
 import { handleError } from "@/utils/index.js";
+import { ApiAlbumWithFirstImage } from "@/services/albums/types.js";
 
 export const AlbumController = Object.freeze({
   returnAlbumWithFirstImages: async (req: Request, res: Response) => {
@@ -25,22 +26,14 @@ export const AlbumController = Object.freeze({
 
       const firstImages = await findFirstImagesOfAlbums(albums);
 
-      if (firstImages.size) {
-        const data = await appendImagesWithFreshUrls(
-          access_token,
-          firstImages,
-          albums,
-        );
-
-        res.json({ albums: data });
-      } else {
-        res.json({
-          albums: {
-            ...albums,
+      const data: ApiAlbumWithFirstImage[] = firstImages.size
+        ? await appendImagesWithFreshUrls(access_token, firstImages, albums)
+        : albums.map((album) => ({
+            ...album,
             firstImage: undefined,
-          },
-        });
-      }
+          }));
+
+      res.json({ albums: data });
     } catch (err) {
       handleError({
         error: { from: "fetching albums", err },

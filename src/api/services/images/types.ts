@@ -37,3 +37,12 @@ export interface MiddlewareProps {
   access_token: string;
   appUser: SchemaUser;
 }
+
+export interface ApiCounts {
+  numMarkDelete: number;
+  numMarkKeep: number;
+  numMarkDeleteLaterDeleted: number;
+  numMarkKeepLaterDeleted: number;
+  totalImages: number;
+  sizeInMB: string;
+}

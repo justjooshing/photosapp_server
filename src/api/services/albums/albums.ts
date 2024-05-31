@@ -6,14 +6,9 @@ import {
   SchemaImages,
 } from "@/services/images/types.js";
 import { Prisma } from "@prisma/client";
+import { ApiAlbum, ApiAlbumWithFirstImage } from "./types.js";
 
-type SchemaAlbumWithCounts = SchemaAlbum & {
-  keepCount: number;
-  deleteCount: number;
-};
-export const findAlbums = async (
-  userId: number,
-): Promise<SchemaAlbumWithCounts[]> => {
+export const findAlbums = async (userId: number): Promise<ApiAlbum[]> => {
   const albums = await prisma.album.findMany({
     orderBy: {
       created_at: "desc",
@@ -33,7 +28,7 @@ export const findAlbums = async (
   });
 
   const getCounts = async () => {
-    const withCounts: SchemaAlbumWithCounts[] = [];
+    const withCounts: ApiAlbum[] = [];
     for (const album of albums) {
       const keepCount = await prisma.images.count({
         where: {
@@ -100,8 +95,8 @@ export const findFirstImagesOfAlbums = async (
 export const appendImagesWithFreshUrls = async (
   access_token: string,
   firstImages: Map<number, SchemaImages>,
-  albums: SchemaAlbum[],
-) => {
+  albums: ApiAlbum[],
+): Promise<ApiAlbumWithFirstImage[]> => {
   const imagesWithUrls = await checkValidBaseUrl(
     access_token,
     Array.from(firstImages.values()),
@@ -175,7 +170,10 @@ export const getOrCreateCurrentAlbum = async (
   return newAlbum;
 };
 
-export const selectAlbum = async (userId: number, albumId: number) =>
+export const selectAlbum = async (
+  userId: number,
+  albumId: number,
+): Promise<SchemaAlbum | null> =>
   await prisma.album.findUnique({
     where: {
       id: albumId,

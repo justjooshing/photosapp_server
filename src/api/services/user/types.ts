@@ -4,3 +4,8 @@ export interface UserData {
   verified_email: boolean;
   picture: string;
 }
+
+export interface ApiUser {
+  profilePicture: string;
+  id: number;
+}
