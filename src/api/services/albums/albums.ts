@@ -160,8 +160,10 @@ export const getOrCreateCurrentAlbum = async (
 
   const todaysAlbum = await prisma.album.findUnique({
     where: {
-      title: albumTitle,
-      userId,
+      userId_title: {
+        userId,
+        title: albumTitle,
+      },
     },
   });
 

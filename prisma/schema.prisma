@@ -69,5 +69,6 @@ model album {
   title      String
   images     images[]
 
+  @@unique([userId, title])
   @@map("Album")
 }
