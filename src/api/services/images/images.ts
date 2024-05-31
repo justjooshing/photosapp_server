@@ -1,4 +1,5 @@
 import {
+  ApiCounts,
   ApiImages,
   LoadImagesParams,
   SchemaImages,
@@ -158,7 +159,10 @@ export const updateNewestImages = async (
   }
 };
 
-export const findImage = async (userId: number, imageId: number) =>
+export const findImage = async (
+  userId: number,
+  imageId: number,
+): Promise<SchemaImages | null> =>
   await prisma.images.findUnique({
     where: {
       userId,
@@ -517,7 +521,7 @@ const selectCountByColumn = async (
     },
   });
 
-export const getSortCounts = async (userId: number) => {
+export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
   const numMarkDelete = await selectCountByColumn(userId, "delete");
   const numMarkDeleteLaterDeleted = await prisma.images.count({
     where: {
@@ -540,10 +544,21 @@ export const getSortCounts = async (userId: number) => {
     },
   });
 
+  const imageSizes = await prisma.images.findMany({
+    where: { userId, size: { not: null } },
+  });
+  const totalSizes = imageSizes.reduce(
+    (acc, curr) => (curr.size ? acc + curr.size : acc),
+    BigInt(0),
+  );
+  const sizeInMB = (totalSizes / BigInt(1000 * 1000)).toString();
+
   return {
     numMarkDelete,
     numMarkKeep,
     numMarkDeleteLaterDeleted,
     numMarkKeepLaterDeleted,
+    totalImages: imageSizes.length,
+    sizeInMB,
   };
 };
