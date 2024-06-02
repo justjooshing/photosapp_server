@@ -196,15 +196,18 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
     if (newImages.length) {
       const currentDate = new Date();
       await prisma.images.createMany({
-        data: newImages.map((image) => ({
-          googleId: image.id,
-          userId,
-          created_at: image.mediaMetadata.creationTime,
-          baseUrl: image.baseUrl,
-          baseUrl_last_updated: currentDate,
-          productUrl: image.productUrl,
-          mime_type: image.mimeType,
-        })),
+        data: newImages.map((image) => {
+          console.log("google image id", image.id);
+          return {
+            googleId: image.id,
+            userId,
+            created_at: image.mediaMetadata.creationTime,
+            baseUrl: image.baseUrl,
+            baseUrl_last_updated: currentDate,
+            productUrl: image.productUrl,
+            mime_type: image.mimeType,
+          };
+        }),
       });
       console.info("db updated");
     }
@@ -554,6 +557,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
   const sizeInMB = (totalSizes / BigInt(1000 * 1000)).toString();
 
   return {
+    // each of these should have a count and total size
     numMarkDelete,
     numMarkKeep,
     numMarkDeleteLaterDeleted,
