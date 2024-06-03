@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { findUser } from "@/services/user/user.js";
 import { getGoogleUser } from "@/third-party/user.js";
+import { handleError } from "@/utils/index.js";
 
 export const getUserData = async (
   req: Request,
@@ -17,7 +18,10 @@ export const getUserData = async (
     req.locals.appUser = appUser;
     next();
   } catch (err) {
-    console.error("ERROR", err);
-    res.status(401).json({ message: err });
+    handleError({
+      error: { from: "getUserData middleware", err },
+      res,
+      callback: () => res.status(401).json({ message: err }),
+    });
   }
 };
