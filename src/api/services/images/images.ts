@@ -231,7 +231,7 @@ export const updateImageSizes = async (
   // refresh baseURLs to be sure we can request them
   if (images.length) {
     const withBaseURLs = await checkValidBaseUrl(access_token, images);
-    console.log("updated all base urls for images missing sizes");
+    console.info("updated all base urls for images missing sizes");
     const imageSizes = await concurrentlyGetImagesSizes(
       access_token,
       withBaseURLs,
@@ -255,7 +255,7 @@ export const updateImageSizes = async (
       }
       console.countReset(countLabel);
     }
-    console.log("last image updated size");
+    console.info("last image updated size");
   }
 };
 
@@ -279,7 +279,7 @@ export const concurrentlyGetImagesSizes = async (
     const results = await Promise.all(promises);
     return results.filter((res) => !!res);
   } catch (err) {
-    console.log("err", err);
+    console.error("err", err);
   }
 };
 
@@ -348,7 +348,7 @@ export const addFreshBaseUrls = async (
     while (dataset.length) {
       // Chunk requests into sets of 50 mediaItemIds
       const chunk = dataset.splice(0, 50);
-      console.log(
+      console.info(
         "requesting chunk",
         `data remaining: ${dataset.length}`,
         `errored urls: ${erroredImages.length}`,
@@ -374,7 +374,7 @@ export const addFreshBaseUrls = async (
         }
       });
     }
-    console.log(
+    console.info(
       "finished requesting all base URLs",
       dataset.length,
       erroredImages.length,
@@ -473,7 +473,7 @@ const handleInvalidGoogleImageId = async (
   };
 
   await markGoogleDeletedImages();
-  console.log("Handled invalid google image ids");
+  console.info("Handled invalid google image ids");
 };
 
 export const sortImageSet = async (userId: number, image: SchemaImages) => {

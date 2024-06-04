@@ -49,6 +49,6 @@ export const getImageSize = async (access_token: string, baseUrl: string) => {
     return { baseUrl, size: Number(firstImageSize) };
   } catch (err) {
     console.count("getImageSize error");
-    console.log("errored url", baseUrl);
+    console.error("errored url", baseUrl);
   }
 };
