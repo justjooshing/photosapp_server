@@ -545,16 +545,18 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
     },
   });
 
-  const imageSizes = await prisma.images.findMany({
+  const {
+    _sum: { size: totalSizes },
+    _count: { size: totalImages },
+  } = await prisma.images.aggregate({
     where: { userId, size: { not: null } },
+    _sum: { size: true },
+    _count: { size: true },
   });
 
-  const totalSizes = imageSizes.reduce(
-    (acc, curr) => (curr.size ? acc + curr.size : acc),
-    BigInt(0),
-  );
-
-  const sizeInMB = (totalSizes / BigInt(1000 * 1000)).toString();
+  const sizeInMB = totalSizes
+    ? (totalSizes / BigInt(1000 * 1000)).toString()
+    : "0";
 
   return {
     // each of these should have a count and total size
@@ -562,7 +564,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
     numMarkKeep,
     numMarkDeleteLaterDeleted,
     numMarkKeepLaterDeleted,
-    totalImages: imageSizes.length,
+    totalImages,
     sizeInMB,
   };
 };
