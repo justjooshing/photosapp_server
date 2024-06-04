@@ -18,7 +18,7 @@ export const getUserData = async (
     req.locals.appUser = appUser;
     next();
   } catch (err) {
-    handleError({
+    return handleError({
       error: { from: "getUserData middleware", err },
       res,
       callback: () => res.status(401).json({ message: err }),

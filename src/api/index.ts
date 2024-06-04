@@ -6,14 +6,14 @@ import {
   auth_unprotected,
   auth_protected,
 } from "./routes/index.js";
-import { checkJWT } from "./middlewares/auth/index.js";
+import { checkJWT, refreshAuthToken } from "./middlewares/auth/index.js";
 import { getUserData } from "./middlewares/user/index.js";
 
 export const routes = () => {
   const app = Router();
   auth_unprotected(app);
 
-  app.use(checkJWT, getUserData);
+  app.use(checkJWT, refreshAuthToken, getUserData);
   auth_protected(app);
   images(app);
   albums(app);
