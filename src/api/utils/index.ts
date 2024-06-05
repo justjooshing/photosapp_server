@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../loaders/prisma.js";
 import { Response } from "express";
 import { CONFIG } from "../../config/index.js";
+import jwt from "jsonwebtoken";
 
 export const prismaRawSql = async <SchemaType>(sqlQuery: Prisma.Sql) =>
   await prisma.$queryRaw<SchemaType>(sqlQuery);
@@ -42,4 +43,18 @@ export const handleCorsOrigin = (
   }
   console.error({ origin });
   return callback(new Error("Not allowed by CORS"));
+};
+
+interface SignAndSetTokenProps {
+  res: Response;
+  access_token: string;
+}
+
+export const signAndSetToken = ({
+  res,
+  access_token,
+}: SignAndSetTokenProps) => {
+  const token = jwt.sign(access_token, CONFIG.JWTsecret);
+  res.header("Access-Control-Expose-Headers", "Jwt");
+  res.setHeader("Jwt", token);
 };
