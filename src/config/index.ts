@@ -40,9 +40,11 @@ export const CONFIG = {
   },
 };
 
-export const oauth2Client = new google.auth.OAuth2({
+export const oauth2Config = {
   clientId: CONFIG.oauth2Credentials.client_id,
   redirectUri: CONFIG.oauth2Credentials.redirect_uris[0],
   clientSecret: CONFIG.oauth2Credentials.client_secret,
   project_id: CONFIG.oauth2Credentials.project_id,
-});
+};
+
+export const oauth2Client = new google.auth.OAuth2(oauth2Config);
