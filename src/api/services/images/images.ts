@@ -53,7 +53,6 @@ export const loadImageSet = async ({
         await fetchAllImages(data.nextPageToken);
       } else {
         console.info("no more pages");
-        console.countReset(countLabel);
         return;
       }
     };
@@ -127,6 +126,8 @@ export const updateNewestImages = async (
   const currentDate = new Date();
 
   const { id: appUserId, images_last_updated_at } = appUser;
+  sortSimilarImages(appUser.id);
+
   const bodyParams = (() => {
     if (!images_last_updated_at) {
       // Grab all images
@@ -144,7 +145,6 @@ export const updateNewestImages = async (
     return undefined;
   })();
 
-  sortSimilarImages(appUser.id);
   if (bodyParams) {
     try {
       const newImages = await loadImageSet({ access_token, bodyParams });
@@ -253,7 +253,6 @@ export const updateImageSizes = async (
           });
         }
       }
-      console.countReset(countLabel);
     }
     console.info("last image updated size");
   }
@@ -274,7 +273,6 @@ export const concurrentlyGetImagesSizes = async (
         });
       }
     });
-    console.countReset(countLabel);
 
     const results = await Promise.all(promises);
     return results.filter((res) => !!res);
@@ -403,7 +401,6 @@ export const addFreshBaseUrls = async (
       });
       response.push(saved);
     }
-    console.countReset(countLabel);
     return response;
   } catch (err) {
     console.error(err);
