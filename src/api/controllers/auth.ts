@@ -47,8 +47,9 @@ export const AuthController = Object.freeze({
       }
       const user = await getGoogleUser(access_token);
       const appUser = await findOrCreateUser(user);
-      updateNewestImages(access_token, appUser);
-      updateImageSizes(access_token, appUser.id);
+
+      await updateNewestImages(access_token, appUser);
+      await updateImageSizes(access_token, appUser.id);
       const token = jwt.sign(access_token, CONFIG.JWTsecret);
       const uri = new URL(redirect_uri);
       uri.searchParams.append("jwt", token);

@@ -126,7 +126,6 @@ export const updateNewestImages = async (
   const currentDate = new Date();
 
   const { id: appUserId, images_last_updated_at } = appUser;
-  sortSimilarImages(appUser.id);
 
   const bodyParams = (() => {
     if (!images_last_updated_at) {
@@ -149,6 +148,7 @@ export const updateNewestImages = async (
     try {
       const newImages = await loadImageSet({ access_token, bodyParams });
       await updateImagesDB(appUserId, newImages);
+      await sortSimilarImages(appUser.id);
       console.info(
         `${bodyParams.filters ? "new" : "initial"} images fetched and sorted`,
       );
