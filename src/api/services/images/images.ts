@@ -288,24 +288,16 @@ export const checkValidBaseUrl = async (
   // Here, check which images don't currently have in-date baseUrls
   const invalidIfBefore = new Date(new Date().getTime() - 1000 * 60 * 60);
 
-  const { validBaseUrls, invalidBaseUrls } = images.reduce(
-    (
-      acc: { validBaseUrls: SchemaImages[]; invalidBaseUrls: SchemaImages[] },
-      curr,
-    ) => {
-      if (
-        !curr.baseUrl ||
-        !curr.baseUrl_last_updated ||
-        curr.baseUrl_last_updated < invalidIfBefore
-      ) {
-        acc.invalidBaseUrls.push(curr);
-      } else {
-        acc.validBaseUrls.push(curr);
-      }
-      return acc;
-    },
-    { validBaseUrls: [], invalidBaseUrls: [] },
-  );
+  const groupedUrls = Object.groupBy(images, (curr) => {
+    return !curr.baseUrl ||
+      !curr.baseUrl_last_updated ||
+      curr.baseUrl_last_updated < invalidIfBefore
+      ? "invalidBaseUrls"
+      : "validBaseUrls";
+  });
+
+  const validBaseUrls = groupedUrls.validBaseUrls || [];
+  const invalidBaseUrls = groupedUrls.invalidBaseUrls || [];
 
   if (invalidBaseUrls.length) {
     const withFreshUrls = await addFreshBaseUrls(access_token, invalidBaseUrls);
@@ -401,6 +393,8 @@ export const addFreshBaseUrls = async (
       });
       response.push(saved);
     }
+    console.countReset(countLabel);
+
     return response;
   } catch (err) {
     console.error(err);
