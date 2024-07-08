@@ -7,6 +7,8 @@ app = 'photosappserver'
 primary_region = 'syd'
 
 [build]
+  [build.args]
+    NODE_VERSION = "22.4.0"
 
 [http_service]
   internal_port = 8080
