@@ -5,7 +5,6 @@ import {
   SchemaAlbum,
   SchemaImages,
 } from "@/services/images/types.js";
-import { Prisma } from "@prisma/client";
 import { ApiAlbum, ApiAlbumWithFirstImage } from "./types.js";
 
 export const findAlbums = async (userId: number): Promise<ApiAlbum[]> => {
@@ -27,68 +26,72 @@ export const findAlbums = async (userId: number): Promise<ApiAlbum[]> => {
     },
   });
 
-  const getCounts = async () => {
-    const withCounts: ApiAlbum[] = [];
-    for (const album of albums) {
-      const keepCount = await prisma.images.count({
-        where: {
-          sorted_album_id: album.id,
-          actually_deleted: null,
-          sorted_status: "keep",
-        },
-      });
-      const deleteCount = await prisma.images.count({
-        where: {
-          sorted_album_id: album.id,
-          actually_deleted: null,
-          sorted_status: "delete",
-        },
-      });
-      withCounts.push({ ...album, keepCount, deleteCount });
-    }
-    return withCounts;
-  };
+  // Get counts sorted_statuses groupedBy albumId
+  const counts = await prisma.images.groupBy({
+    by: ["sorted_album_id", "sorted_status"],
+    where: {
+      sorted_album_id: {
+        in: albums.map(({ id }) => id),
+      },
+      actually_deleted: null,
+    },
+    _count: {
+      sorted_status: true,
+    },
+  });
 
-  const albumWithCounts = await getCounts();
-  return albumWithCounts;
+  // Map each count to respective albums
+  const albumCounts = new Map();
+  counts.forEach(
+    ({ _count: { sorted_status: count }, sorted_album_id, sorted_status }) => {
+      if (!albumCounts.has(sorted_album_id)) {
+        albumCounts.set(sorted_album_id, { keepCount: 0, deleteCount: 0 });
+      }
+      const albumCount = albumCounts.get(sorted_album_id);
+      const type = sorted_status === "keep" ? "keepCount" : "deleteCount";
+      albumCount[type] = count;
+    },
+  );
+
+  return albums.map((album) => ({
+    ...album,
+    ...albumCounts.get(album.id),
+  }));
 };
 
 export const findFirstImagesOfAlbums = async (
   albums: SchemaAlbum[],
 ): Promise<Map<number, SchemaImages>> => {
-  const firstImages = new Map<number, SchemaImages>();
-
-  for (const album of albums) {
-    const firstImageProps = ({
-      sorted_status,
-    }: {
-      sorted_status: SchemaImages["sorted_status"];
-    }): Prisma.imagesFindFirstArgs => ({
-      orderBy: [{ created_at: "asc" }],
-      where: {
-        sorted_status,
-        sorted_album_id: album.id,
-        actually_deleted: null,
-        mime_type: {
-          not: "video/mp4",
-        },
+  const images = await prisma.images.findMany({
+    where: {
+      sorted_album_id: {
+        in: albums.map(({ id }) => id),
       },
-    });
+      actually_deleted: null,
+      mime_type: {
+        not: "video/mp4",
+      },
+    },
+    orderBy: {
+      created_at: "asc",
+    },
+  });
 
-    const firstDeletedImage = await prisma.images.findFirst(
-      firstImageProps({ sorted_status: "delete" }),
-    );
-    if (firstDeletedImage) {
-      firstImages.set(album.id, firstDeletedImage);
-    } else {
-      const firstImage = await prisma.images.findFirst(
-        firstImageProps({ sorted_status: "keep" }),
-      );
-      if (firstImage) {
-        firstImages.set(album.id, firstImage);
+  const firstImages = new Map<number, SchemaImages>();
+  images.forEach((image) => {
+    if (image.sorted_album_id) {
+      // Set first image of album
+      if (!firstImages.has(image.sorted_album_id)) {
+        firstImages.set(image.sorted_album_id, image);
+      } else if (
+        // override with first _deleted_ image if necessary
+        image.sorted_status === "delete" &&
+        firstImages.get(image.sorted_album_id)?.sorted_status !== "delete"
+      ) {
+        firstImages.set(image.sorted_album_id, image);
       }
     }
-  }
+  });
   return firstImages;
 };
 
