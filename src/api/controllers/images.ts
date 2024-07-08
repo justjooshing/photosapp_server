@@ -53,7 +53,7 @@ export const ImagesController = Object.freeze({
     try {
       const currentAlbum = await getOrCreateCurrentAlbum(
         appUser.id,
-        currentImage.sorted_album_id,
+        currentImage,
       );
 
       const updatedImage = await (async (): Promise<SchemaImages> => {

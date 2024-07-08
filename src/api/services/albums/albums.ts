@@ -137,15 +137,13 @@ export const createAlbum = async (
 
 export const getOrCreateCurrentAlbum = async (
   userId: number,
-  albumId: number | null,
+  image: SchemaImages,
 ) => {
-  const albumTitle = new Date().toDateString();
-
-  if (albumId) {
+  if (image.sorted_album_id) {
     const currentAlbum = await prisma.album.findUnique({
       where: {
         userId,
-        id: albumId,
+        id: image.sorted_album_id,
       },
     });
     if (currentAlbum) {
@@ -153,7 +151,12 @@ export const getOrCreateCurrentAlbum = async (
     }
   }
 
-  const todaysAlbum = await prisma.album.findUnique({
+  // group under image_sets if belonging to a set
+  const albumTitle = image.image_set_id
+    ? image.image_set_id.toString()
+    : new Date().toDateString();
+
+  const imageRelevantAlbum = await prisma.album.findUnique({
     where: {
       userId_title: {
         userId,
@@ -162,8 +165,8 @@ export const getOrCreateCurrentAlbum = async (
     },
   });
 
-  if (todaysAlbum) {
-    return todaysAlbum;
+  if (imageRelevantAlbum) {
+    return imageRelevantAlbum;
   }
 
   const newAlbum = await createAlbum(userId, albumTitle);
