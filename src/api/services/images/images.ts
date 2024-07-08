@@ -299,21 +299,20 @@ export const checkValidBaseUrl = async (
   const validBaseUrls = groupedUrls.validBaseUrls || [];
   const invalidBaseUrls = groupedUrls.invalidBaseUrls || [];
 
-  if (invalidBaseUrls.length) {
-    const withFreshUrls = await addFreshBaseUrls(access_token, invalidBaseUrls);
-    const allImages: SchemaImages[] = validBaseUrls.concat(withFreshUrls);
-
-    const sortImagesByDate = (a: SchemaImages, b: SchemaImages) =>
-      a.created_at.getTime() - b.created_at.getTime();
-
-    const shapedImages = allImages
-      .sort(sortImagesByDate)
-      .map(shapeImagesResponse);
-    // Updated with productUrl
-    return shapedImages;
+  if (!invalidBaseUrls.length) {
+    return validBaseUrls.map(shapeImagesResponse);
   }
 
-  return validBaseUrls.map(shapeImagesResponse);
+  const withFreshUrls = await addFreshBaseUrls(access_token, invalidBaseUrls);
+  const allImages: SchemaImages[] = validBaseUrls.concat(withFreshUrls);
+
+  const sortImagesByDate = (a: SchemaImages, b: SchemaImages) =>
+    a.created_at.getTime() - b.created_at.getTime();
+
+  const sortedImages = allImages
+    .sort(sortImagesByDate)
+    .map(shapeImagesResponse);
+  return sortedImages;
 };
 
 // Super annoying having to refetch the image urls again
