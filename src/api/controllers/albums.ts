@@ -11,7 +11,7 @@ import { handleError } from "@/utils/index.js";
 import { ApiAlbumWithFirstImage } from "@/services/albums/types.js";
 
 export const AlbumController = Object.freeze({
-  returnAlbumWithFirstImages: async (req: Request, res: Response) => {
+  getAlbumWithFirstImages: async (req: Request, res: Response) => {
     try {
       const {
         access_token,
