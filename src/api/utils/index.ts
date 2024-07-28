@@ -58,3 +58,7 @@ export const signAndSetToken = ({
   res.header("Access-Control-Expose-Headers", "Jwt");
   res.setHeader("Jwt", token);
 };
+
+export const bigIntToString = (val: bigint | null) => {
+  return val?.toString() || "0";
+};

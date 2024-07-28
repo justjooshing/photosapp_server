@@ -11,6 +11,7 @@ import { getOrCreateCurrentAlbum } from "@/services/albums/albums.js";
 import { ImageType, SchemaImages } from "@/services/images/types.js";
 import { prisma } from "../../loaders/prisma.js";
 import { queryByImageType } from "@/services/images/queries.js";
+import { deprecated_getSortCounts } from "@/services/images/deprecated/v0/index.js";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
@@ -92,6 +93,14 @@ export const ImagesController = Object.freeze({
   },
   getSortCounts: async (req: Request, res: Response) => {
     try {
+      const version = req.header("app-version");
+      console.log({ version });
+      if (!version) {
+        // update to 'if deprecatedVersions.keys.includes(version)
+        // lookup version
+        const counts = await deprecated_getSortCounts(req.locals.appUser.id);
+        res.status(200).json({ counts });
+      }
       const counts = await getSortCounts(req.locals.appUser.id);
       res.status(200).json({ counts });
     } catch (err) {

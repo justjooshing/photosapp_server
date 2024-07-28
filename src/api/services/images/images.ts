@@ -20,7 +20,7 @@ import {
   MediaItemResultSuccess,
 } from "@/third-party/types.js";
 import { group_similar } from "./queries.js";
-import { prismaRawSql } from "@/utils/index.js";
+import { bigIntToString, prismaRawSql } from "@/utils/index.js";
 import { updateUserLastUpdate } from "@/services/user/user.js";
 import pLimit from "p-limit";
 
@@ -501,60 +501,89 @@ export const sortImageSet = async (userId: number, image: SchemaImages) => {
   console.info("updated image_set");
 };
 
-const selectCountByColumn = async (
-  userId: number,
-  sorted_status: "keep" | "delete",
-) =>
-  await prisma.images.count({
-    where: {
-      userId,
-      sorted_status,
-    },
-  });
-
 export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
-  const numMarkDelete = await selectCountByColumn(userId, "delete");
-  const numMarkDeleteLaterDeleted = await prisma.images.count({
+  const totalDeleted = await prisma.images.aggregate({
     where: {
       userId,
       sorted_status: "delete",
-      actually_deleted: {
-        not: null,
+      actually_deleted: { not: null },
+      mime_type: {
+        not: "video/mp4",
       },
     },
-  });
-
-  const numMarkKeep = await selectCountByColumn(userId, "keep");
-  const numMarkKeepLaterDeleted = await prisma.images.count({
-    where: {
-      userId,
-      sorted_status: "keep",
-      actually_deleted: {
-        not: null,
-      },
-    },
-  });
-
-  const {
-    _sum: { size: totalSizes },
-    _count: { size: totalImages },
-  } = await prisma.images.aggregate({
-    where: { userId, size: { not: null } },
     _sum: { size: true },
     _count: { size: true },
   });
 
-  const sizeInMB = totalSizes
-    ? (totalSizes / BigInt(1000 * 1000)).toString()
-    : "0";
+  const totalSorted = await prisma.images.aggregate({
+    where: {
+      userId,
+      sorted_status: { in: ["keep", "delete"] },
+      mime_type: {
+        not: "video/mp4",
+      },
+    },
+    _sum: { size: true },
+    _count: { size: true },
+  });
+
+  const totalImages = await prisma.images.aggregate({
+    where: {
+      userId,
+      size: { not: null },
+      mime_type: {
+        not: "video/mp4",
+      },
+    },
+    _sum: { size: true },
+    _count: { size: true },
+  });
+
+  const markDeleteNotDeleted = await prisma.images.aggregate({
+    where: {
+      userId,
+      sorted_status: "delete",
+      actually_deleted: null,
+      mime_type: {
+        not: "video/mp4",
+      },
+    },
+    _sum: { size: true },
+    _count: { size: true },
+  });
+
+  const albumsToDelete = await prisma.images.groupBy({
+    by: ["sorted_album_id"],
+    where: {
+      userId,
+      sorted_status: "delete",
+      actually_deleted: null,
+      mime_type: {
+        not: "video/mp4",
+      },
+    },
+  });
 
   return {
-    // each of these should have a count and total size
-    numMarkDelete,
-    numMarkKeep,
-    numMarkDeleteLaterDeleted,
-    numMarkKeepLaterDeleted,
-    totalImages,
-    sizeInMB,
+    markDeleteNotDeleted: {
+      count: markDeleteNotDeleted._count.size,
+      size: bigIntToString(markDeleteNotDeleted._sum.size),
+    },
+    totalImages: {
+      count: totalImages._count.size,
+      size: bigIntToString(totalImages._sum.size),
+    },
+    totalSorted: {
+      count: totalSorted._count.size,
+      size: bigIntToString(totalSorted._sum.size),
+    },
+    totalDeleted: {
+      count: totalDeleted._count.size,
+      size: bigIntToString(totalDeleted._sum.size),
+    },
+    albumsToDelete: {
+      count: albumsToDelete.length,
+      size: bigIntToString(markDeleteNotDeleted._sum.size),
+    },
   };
 };

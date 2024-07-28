@@ -38,11 +38,11 @@ export interface MiddlewareProps {
   appUser: SchemaUser;
 }
 
+type CountStatistics = { count: number; size: string };
 export interface ApiCounts {
-  numMarkDelete: number;
-  numMarkKeep: number;
-  numMarkDeleteLaterDeleted: number;
-  numMarkKeepLaterDeleted: number;
-  totalImages: number;
-  sizeInMB: string;
+  markDeleteNotDeleted: CountStatistics;
+  totalImages: CountStatistics;
+  totalSorted: CountStatistics;
+  totalDeleted: CountStatistics;
+  albumsToDelete: CountStatistics;
 }
