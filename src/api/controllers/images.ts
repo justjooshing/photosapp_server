@@ -81,7 +81,7 @@ export const ImagesController = Object.freeze({
         updatedImage,
       ]);
 
-      res.status(200).json({ image: freshUrlImage });
+      return res.status(200).json({ image: freshUrlImage });
     } catch (err) {
       handleError({
         error: { from: "Updating image", err },
@@ -99,10 +99,10 @@ export const ImagesController = Object.freeze({
         // update to 'if deprecatedVersions.keys.includes(version)
         // lookup version
         const counts = await deprecated_getSortCounts(req.locals.appUser.id);
-        res.status(200).json({ counts });
+        return res.status(200).json({ counts });
       }
       const counts = await getSortCounts(req.locals.appUser.id);
-      res.status(200).json({ counts });
+      return res.status(200).json({ counts });
     } catch (err) {
       handleError({
         error: { from: "Counts", err },

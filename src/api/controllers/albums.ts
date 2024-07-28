@@ -32,7 +32,7 @@ export const AlbumController = Object.freeze({
             ...album,
             firstImage: undefined,
           }));
-      res.json({ albums: data });
+      return res.json({ albums: data });
     } catch (err) {
       handleError({
         error: { from: "fetching albums", err },

@@ -18,9 +18,9 @@ export const handleError = ({
 }) => {
   console.error(`${error.from} ERROR`, error.err);
   if (error.err instanceof Error) {
-    callback();
+    return callback();
   } else {
-    res.status(500).json({ message: "Something went wrong" });
+    return res.status(500).json({ message: "Something went wrong" });
   }
 };
 

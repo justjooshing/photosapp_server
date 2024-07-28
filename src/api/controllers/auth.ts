@@ -19,12 +19,12 @@ export const AuthController = Object.freeze({
       scope: CONFIG.oauth2Credentials.scopes,
     });
 
-    res.status(200).json({ loginLink });
+    return res.status(200).json({ loginLink });
   },
   appLogout: async (req: Request, res: Response) => {
     try {
       await oauth2Client.revokeToken(req.locals.access_token);
-      res.status(204).end();
+      return res.status(204).end();
     } catch (err) {
       handleError({
         error: { from: "logout", err },
@@ -53,7 +53,7 @@ export const AuthController = Object.freeze({
       const token = jwt.sign(access_token, CONFIG.JWTsecret);
       const uri = new URL(redirect_uri);
       uri.searchParams.append("jwt", token);
-      res.redirect(uri.toString());
+      return res.redirect(uri.toString());
     } catch (err) {
       handleError({
         error: { from: "Auth", err },

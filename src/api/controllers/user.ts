@@ -11,7 +11,7 @@ export const UserController = Object.freeze({
       profilePicture: googleProfilePicture,
       id,
     };
-    res.status(200).json({ user });
+    return res.status(200).json({ user });
   },
   deleteUser: async (req: Request, res: Response) => {
     const { id } = req.locals.appUser;
@@ -39,7 +39,7 @@ export const UserController = Object.freeze({
       });
 
       await oauth2Client.revokeToken(req.locals.access_token);
-      res.status(201).end();
+      return res.status(201).end();
     } catch (err) {
       return handleError({
         error: { err, from: "Delete user" },
