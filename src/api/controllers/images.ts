@@ -102,7 +102,7 @@ export const ImagesController = Object.freeze({
         return res.status(200).json({ counts });
       }
       const counts = await getSortCounts(req.locals.appUser.id);
-      return res.status(200).json({ counts });
+      return res.status(200).json(counts);
     } catch (err) {
       handleError({
         error: { from: "Counts", err },
