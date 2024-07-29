@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { CONFIG, oauth2Client } from "../../config/index.js";
 import jwt from "jsonwebtoken";
-import { findOrCreateUser } from "@/services/user/user.js";
+import { findOrCreateUser } from "@/user/services/user.js";
 import {
   updateImageSizes,
   updateNewestImages,
-} from "@/services/images/images.js";
+} from "@/images/services/images.js";
 import { getGoogleUser } from "@/third-party/user.js";
 import { generateAccessToken } from "@/third-party/auth.js";
 import { handleError } from "@/utils/index.js";

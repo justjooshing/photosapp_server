@@ -21,7 +21,7 @@ import {
 } from "@/third-party/types.js";
 import { group_similar } from "./queries.js";
 import { bigIntToString, prismaRawSql } from "@/utils/index.js";
-import { updateUserLastUpdate } from "@/services/user/user.js";
+import { updateUserLastUpdate } from "@/user/services/user.js";
 import pLimit from "p-limit";
 
 export const loadImageSet = async ({

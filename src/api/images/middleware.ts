@@ -1,4 +1,4 @@
-import { zImage, zImageId } from "@/schema/images.js";
+import { zImage, zImageId } from "./schema.js";
 import { handleError } from "@/utils/index.js";
 import { NextFunction, Request, Response } from "express";
 

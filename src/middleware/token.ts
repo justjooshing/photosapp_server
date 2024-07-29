@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { CONFIG, oauth2Config } from "../../../config/index.js";
-import { getTokenFromHeader } from "@/services/auth/auth.js";
 import jwt from "jsonwebtoken";
-import { handleError, signAndSetToken } from "@/utils/index.js";
+import { handleError } from "@/utils/index.js";
 import { google } from "googleapis";
+import { getTokenFromHeader } from "@/auth/services.js";
+import { CONFIG, oauth2Config } from "../config/index.js";
 
 export const checkJWT = async (
   req: Request,
@@ -46,7 +46,9 @@ export const refreshAuthToken = async (
         client.setCredentials(credentials);
         if (credentials.access_token) {
           req.locals.access_token = credentials.access_token;
-          signAndSetToken({ res, access_token });
+          const token = jwt.sign(access_token, CONFIG.JWTsecret);
+          res.header("Access-Control-Expose-Headers", "Jwt");
+          res.setHeader("Jwt", token);
         }
       }
     }

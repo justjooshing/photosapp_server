@@ -1,10 +1,10 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Express } from "express";
-import { routes } from "../api/index.js";
+import { routes } from "../api/routes.js";
 import { CONFIG } from "../config/index.js";
-import { MiddlewareProps } from "../api/services/images/types.js";
-import { handleCorsOrigin } from "@/utils/index.js";
+import { MiddlewareProps } from "../api/images/services/types.js";
+import { handleCorsOrigin } from "../middleware/cors.js";
 
 export const expressSetup = (app: Express) => {
   app.use(cors({ origin: handleCorsOrigin }));

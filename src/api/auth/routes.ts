@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { AuthController } from "@/controllers/auth.js";
+import { AuthController } from "./controller.js";
 
 export const auth_unprotected = (app: Router) => {
   const unprotectedRoute = Router();

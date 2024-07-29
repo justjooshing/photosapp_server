@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { findUser } from "@/services/user/user.js";
+import { findUser } from "@/user/services/user.js";
 import { getGoogleUser } from "@/third-party/user.js";
 import { handleError } from "@/utils/index.js";
 

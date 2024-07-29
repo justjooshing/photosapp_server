@@ -5,13 +5,13 @@ import {
   getSortCounts,
   sortImageSet,
   updateImagesByChoice,
-} from "@/services/images/images.js";
+} from "@/images/services/images.js";
 import { handleError } from "@/utils/index.js";
-import { getOrCreateCurrentAlbum } from "@/services/albums/albums.js";
-import { ImageType, SchemaImages } from "@/services/images/types.js";
+import { getOrCreateCurrentAlbum } from "@/albums/services/albums.js";
+import { ImageType, SchemaImages } from "@/images/services/types.js";
 import { prisma } from "../../loaders/prisma.js";
-import { queryByImageType } from "@/services/images/queries.js";
-import { deprecated_getSortCounts } from "@/services/images/deprecated/v0/index.js";
+import { queryByImageType } from "@/images/services/queries.js";
+import { deprecated_getSortCounts } from "@/images/services/deprecated/v0/index.js";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
