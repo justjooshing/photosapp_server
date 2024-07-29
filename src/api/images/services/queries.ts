@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { ImageType, SchemaImages } from "./types.js";
-import { prismaRawSql } from "@/utils/index.js";
-import { prisma } from "../../../loaders/prisma.js";
+import { prismaRawSql } from "@/api/utils/index.js";
+import { prisma } from "@/loaders/prisma.js";
 
 export const todayQuery = (
   userId: number,

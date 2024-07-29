@@ -1,6 +1,6 @@
 import { UserData } from "./types.js";
-import { prisma } from "../../../loaders/prisma.js";
-import { SchemaUser } from "@/images/services/types.js";
+import { prisma } from "@/loaders/prisma.js";
+import { SchemaUser } from "@/api/images/services/types.js";
 
 const createNewUser = async ({ email, id, picture }: UserData) => {
   const newUser = await prisma.user.create({

@@ -1,5 +1,5 @@
 import ky from "ky";
-import { HandleGetImages } from "@/images/services/types.js";
+import { HandleGetImages } from "@/api/images/services/types.js";
 import { MediaItemSearch, MediaItemResultsImages, Images } from "./types.js";
 
 const endpoint = "https://photoslibrary.googleapis.com/v1/mediaItems";

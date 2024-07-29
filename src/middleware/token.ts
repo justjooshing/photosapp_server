@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { handleError } from "@/utils/index.js";
+import { handleError } from "@/api/utils/index.js";
 import { google } from "googleapis";
-import { getTokenFromHeader } from "@/auth/services.js";
+import { getTokenFromHeader } from "@/api/auth/services.js";
 import { CONFIG, oauth2Config } from "../config/index.js";
 
 export const checkJWT = async (

@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import { CONFIG, oauth2Client } from "../../config/index.js";
+import { CONFIG, oauth2Client } from "@/config/index.js";
 import jwt from "jsonwebtoken";
-import { findOrCreateUser } from "@/user/services/user.js";
+import { findOrCreateUser } from "@/api/user/services/user.js";
 import {
   updateImageSizes,
   updateNewestImages,
-} from "@/images/services/images.js";
-import { getGoogleUser } from "@/third-party/user.js";
-import { generateAccessToken } from "@/third-party/auth.js";
-import { handleError } from "@/utils/index.js";
+} from "@/api/images/services/images.js";
+import { getGoogleUser } from "@/api/third-party/user.js";
+import { generateAccessToken } from "@/api/third-party/auth.js";
+import { handleError } from "@/api/utils/index.js";
 
 const redirect_uri = CONFIG.redirect_uri;
 

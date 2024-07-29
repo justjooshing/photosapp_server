@@ -1,10 +1,10 @@
-import { prisma } from "../../../loaders/prisma.js";
-import { checkValidBaseUrl } from "@/images/services/images.js";
+import { prisma } from "@/loaders/prisma.js";
+import { checkValidBaseUrl } from "@/api/images/services/images.js";
 import {
   ApiImages,
   SchemaAlbum,
   SchemaImages,
-} from "@/images/services/types.js";
+} from "@/api/images/services/types.js";
 import { ApiAlbum, ApiAlbumWithFirstImage } from "./types.js";
 
 export const findAlbums = async (userId: number): Promise<ApiAlbum[]> => {

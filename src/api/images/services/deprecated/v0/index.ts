@@ -1,4 +1,4 @@
-import { prisma } from "../../../../../loaders/prisma.js";
+import { prisma } from "@/loaders/prisma.js";
 import { ApiCounts } from "./types.js";
 
 const selectCountByColumn = async (

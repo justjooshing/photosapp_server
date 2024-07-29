@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "../../loaders/prisma.js";
+import { prisma } from "@/loaders/prisma.js";
 import { Response } from "express";
 
 export const prismaRawSql = async <SchemaType>(sqlQuery: Prisma.Sql) =>

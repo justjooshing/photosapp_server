@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { ImagesController } from "./controller.ts";
-import { validateUpdateSingleImage } from "./middleware.ts";
+import { ImagesController } from "./controller.js";
+import { validateUpdateSingleImage } from "./middleware.js";
 
 export const images = (app: Router) => {
   const route = Router();

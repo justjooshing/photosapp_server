@@ -1,4 +1,4 @@
-import { ApiImages, SchemaAlbum } from "../../images/services/types.js";
+import { ApiImages, SchemaAlbum } from "@/api/images/services/types.js";
 
 export interface ApiAlbum extends SchemaAlbum {
   keepCount: number;

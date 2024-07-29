@@ -5,13 +5,13 @@ import {
   getSortCounts,
   sortImageSet,
   updateImagesByChoice,
-} from "@/images/services/images.js";
-import { handleError } from "@/utils/index.js";
-import { getOrCreateCurrentAlbum } from "@/albums/services/albums.js";
-import { ImageType, SchemaImages } from "@/images/services/types.js";
-import { prisma } from "../../loaders/prisma.js";
-import { queryByImageType } from "@/images/services/queries.js";
-import { deprecated_getSortCounts } from "@/images/services/deprecated/v0/index.js";
+} from "@/api/images/services/images.js";
+import { handleError } from "@/api/utils/index.js";
+import { getOrCreateCurrentAlbum } from "@/api/albums/services/albums.js";
+import { ImageType, SchemaImages } from "@/api/images/services/types.js";
+import { prisma } from "@/loaders/prisma.js";
+import { queryByImageType } from "@/api/images/services/queries.js";
+import { deprecated_getSortCounts } from "@/api/images/services/deprecated/v0/index.js";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
@@ -94,7 +94,6 @@ export const ImagesController = Object.freeze({
   getSortCounts: async (req: Request, res: Response) => {
     try {
       const version = req.header("app-version");
-      console.log({ version });
       if (!version) {
         // update to 'if deprecatedVersions.keys.includes(version)
         // lookup version

@@ -5,10 +5,10 @@ import {
   findFirstImagesOfAlbums,
   selectAlbum,
   selectAlbumImages,
-} from "@/albums/services/albums.js";
-import { checkValidBaseUrl } from "@/images/services/images.js";
-import { handleError } from "@/utils/index.js";
-import { ApiAlbumWithFirstImage } from "@/albums/services/types.js";
+} from "@/api/albums/services/albums.js";
+import { checkValidBaseUrl } from "@/api/images/services/images.js";
+import { handleError } from "@/api/utils/index.js";
+import { ApiAlbumWithFirstImage } from "@/api/albums/services/types.js";
 
 export const AlbumController = Object.freeze({
   getAlbumWithFirstImages: async (req: Request, res: Response) => {

@@ -1,4 +1,4 @@
-import { CONFIG, oauth2Client } from "../../config/index.js";
+import { CONFIG, oauth2Client } from "@/config/index.js";
 
 export const generateAccessToken = async (code: string) => {
   const { tokens } = await oauth2Client.getToken({

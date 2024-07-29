@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { findUser } from "@/user/services/user.js";
-import { getGoogleUser } from "@/third-party/user.js";
-import { handleError } from "@/utils/index.js";
+import { findUser } from "@/api/user/services/user.js";
+import { getGoogleUser } from "@/api/third-party/user.js";
+import { handleError } from "@/api/utils/index.js";
 
 export const getUserData = async (
   req: Request,

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { prisma } from "../../loaders/prisma.js";
-import { oauth2Client } from "../../config/index.js";
-import { handleError } from "@/utils/index.js";
-import { ApiUser } from "@/user/services/types.js";
+import { prisma } from "@/loaders/prisma.js";
+import { oauth2Client } from "@/config/index.js";
+import { handleError } from "@/api/utils/index.js";
+import { ApiUser } from "@/api/user/services/types.js";
 
 export const UserController = Object.freeze({
   getUser: (req: Request, res: Response) => {
