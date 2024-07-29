@@ -37,11 +37,8 @@ RUN npx prisma generate
 # Copy application code
 COPY . .
 
-# Compile TypeScript to JavaScript
-RUN yarn tsc
-
-# Run tsc-alias if necessary
-RUN yarn tsc-alias
+# Compile TypeScript to JavaScript, and convert aliases to relative paths
+RUN yarn build
 
 # Final stage for app image
 FROM base
@@ -62,4 +59,4 @@ ENV NODE_ENV="production"
 
 # Expose port and start the server
 EXPOSE 8080
-CMD [ "yarn", "run", "start" ]
+CMD [ "yarn", "start" ]

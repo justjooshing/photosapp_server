@@ -1,7 +1,6 @@
 import express from "express";
-
-import { expressSetup } from "./src/loaders/express.js";
 import { CONFIG } from "./src/config/index.js";
+import { expressSetup } from "./src/loaders/express.js";
 
 const app = express();
 
