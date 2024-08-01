@@ -1,4 +1,4 @@
-import { zImage, zImageId } from "./schema.js";
+import { zImage, zImageId } from "./validation.js";
 import { handleError } from "@/api/utils/index.js";
 import { NextFunction, Request, Response } from "express";
 
