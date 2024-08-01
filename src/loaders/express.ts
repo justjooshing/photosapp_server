@@ -3,8 +3,8 @@ import cors from "cors";
 import express, { Express } from "express";
 import { routes } from "../api/routes.js";
 import { CONFIG } from "../config/index.js";
-import { MiddlewareProps } from "../api/images/services/types.js";
 import { handleCorsOrigin } from "../middleware/cors.js";
+import { MiddlewareProps } from "@/api/types.js";
 
 export const expressSetup = (app: Express) => {
   app.use(cors({ origin: handleCorsOrigin }));

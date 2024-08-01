@@ -8,7 +8,7 @@ export const checkAppVersion = (
 ) => {
   try {
     const version = req.header("app-version");
-    if (!version || !Number(version)) {
+    if (version !== "web" && (!version || !Number(version))) {
       throw new Error("Invalid app version");
     }
     req.locals.app_version = Number(version);
