@@ -39,10 +39,12 @@ export interface MiddlewareProps {
 }
 
 type CountStatistics = { count: number; size: string };
-export interface ApiCounts {
-  markDeleteNotDeleted: CountStatistics;
-  totalImages: CountStatistics;
-  totalSorted: CountStatistics;
-  totalDeleted: CountStatistics;
-  albumsToDelete: CountStatistics;
-}
+type StatisticKeys =
+  | "markDeleteNotDeleted"
+  | "totalImages"
+  | "totalSorted"
+  | "totalDeleted"
+  | "albumsToDelete"
+  | "albumsKept";
+
+export type ApiCounts = Record<StatisticKeys, CountStatistics>;

@@ -532,6 +532,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
     where: {
       userId,
       size: { not: null },
+      actually_deleted: null,
       mime_type: {
         not: "video/mp4",
       },
@@ -553,17 +554,20 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
     _count: { size: true },
   });
 
-  const albumsToDelete = await prisma.images.groupBy({
-    by: ["sorted_album_id"],
-    where: {
-      userId,
-      sorted_status: "delete",
-      actually_deleted: null,
-      mime_type: {
-        not: "video/mp4",
+  const sortedAlbums = await prisma.images
+    .groupBy({
+      by: ["sorted_album_id", "sorted_status"],
+      where: {
+        userId,
+        actually_deleted: null,
+        mime_type: {
+          not: "video/mp4",
+        },
       },
-    },
-  });
+    })
+    .then((data) =>
+      Object.groupBy(data, ({ sorted_status }) => sorted_status ?? "null"),
+    );
 
   return {
     markDeleteNotDeleted: {
@@ -583,8 +587,15 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
       size: bigIntToString(totalDeleted._sum.size),
     },
     albumsToDelete: {
-      count: albumsToDelete.length,
+      count: sortedAlbums.delete?.length || 0,
       size: bigIntToString(markDeleteNotDeleted._sum.size),
+    },
+    albumsKept: {
+      count: sortedAlbums.keep?.length || 0,
+      size: (
+        (Number(totalImages._sum.size) || 0) -
+        (Number(markDeleteNotDeleted._sum.size) || 0)
+      ).toString(),
     },
   };
 };

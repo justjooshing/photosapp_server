@@ -13,12 +13,7 @@ import { ApiAlbumWithFirstImage } from "@/api/albums/services/types.js";
 export const AlbumController = Object.freeze({
   getAlbumWithFirstImages: async (req: Request, res: Response) => {
     try {
-      const {
-        access_token,
-        appUser: { id: userId },
-      } = req.locals;
-
-      const albums = await findAlbums(userId);
+      const albums = await findAlbums(req.locals.appUser.id);
 
       if (!albums.length) {
         return res.status(200).json({ albums: [] });
@@ -27,7 +22,11 @@ export const AlbumController = Object.freeze({
       const firstImages = await findFirstImagesOfAlbums(albums);
 
       const data: ApiAlbumWithFirstImage[] = firstImages.size
-        ? await appendImagesWithFreshUrls(access_token, firstImages, albums)
+        ? await appendImagesWithFreshUrls(
+            req.locals.access_token,
+            firstImages,
+            albums,
+          )
         : albums.map((album) => ({
             ...album,
             firstImage: undefined,
