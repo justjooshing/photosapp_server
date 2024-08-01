@@ -33,11 +33,6 @@ export type ApiImages = Pick<
   "sorted_status" | "sorted_album_id" | "baseUrl" | "productUrl" | "id"
 > & { size: string | null };
 
-export interface MiddlewareProps {
-  access_token: string;
-  appUser: SchemaUser;
-}
-
 type CountStatistics = { count: number; size: string };
 type StatisticKeys =
   | "markDeleteNotDeleted"

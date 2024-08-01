@@ -11,3 +11,9 @@ declare module "express-serve-static-core" {
     locals: MiddlewareProps;
   }
 }
+
+interface MiddlewareProps {
+  access_token: string;
+  appUser: SchemaUser;
+  app_version: number;
+}
