@@ -1,5 +1,4 @@
 import { Request as ExpressRequest } from "express";
-import { MiddlewareProps } from "./images/services/types.ts";
 
 declare module "express" {
   interface Request extends ExpressRequest {

@@ -12,7 +12,12 @@ import { ApiAlbumWithFirstImage } from "@/api/albums/services/types.js";
 import { deprecated_findAlbums } from "./services/deprecated/v0/index.js";
 
 export const AlbumController = Object.freeze({
-  getAlbumWithFirstImages: async (req: Request, res: Response) => {
+  getAlbumWithFirstImages: async (
+    req: Request & {
+      query: { sorted_status: "keep" | "delete"; lastAlbumId: string };
+    },
+    res: Response,
+  ) => {
     try {
       const albums =
         req.locals.app_version < 12
