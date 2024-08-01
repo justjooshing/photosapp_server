@@ -7,22 +7,50 @@ import {
 } from "@/api/images/services/types.js";
 import { ApiAlbum, ApiAlbumWithFirstImage } from "./types.js";
 
-export const findAlbums = async (userId: number): Promise<ApiAlbum[]> => {
+export const findAlbums = async (
+  userId: number,
+  sorted_status: "keep" | "delete",
+  lastAlbumId?: number,
+): Promise<ApiAlbum[]> => {
   const albums = await prisma.album.findMany({
     orderBy: {
       created_at: "desc",
     },
+    take: 10,
+    ...(lastAlbumId && {
+      skip: 1,
+      cursor: {
+        id: lastAlbumId,
+      },
+    }),
     where: {
       userId,
-      images: {
-        some: {
-          NOT: {
-            actually_deleted: {
-              not: null,
+      images:
+        sorted_status === "delete"
+          ? {
+              // If delete, some should be 'delete'
+              some: {
+                AND: {
+                  sorted_status: "delete",
+                  actually_deleted: null,
+                },
+              },
+            }
+          : {
+              // Otherwise the album should contain some 'keep'
+              // but none that are to be deleted but not actually deleted
+              some: {
+                sorted_status: "keep",
+              },
+              every: {
+                NOT: {
+                  AND: {
+                    sorted_status: "delete",
+                    actually_deleted: null,
+                  },
+                },
+              },
             },
-          },
-        },
-      },
     },
   });
 

@@ -9,11 +9,19 @@ import {
 import { checkValidBaseUrl } from "@/api/images/services/images.js";
 import { handleError } from "@/api/utils/index.js";
 import { ApiAlbumWithFirstImage } from "@/api/albums/services/types.js";
+import { deprecated_findAlbums } from "./services/deprecated/v0/index.js";
 
 export const AlbumController = Object.freeze({
   getAlbumWithFirstImages: async (req: Request, res: Response) => {
     try {
-      const albums = await findAlbums(req.locals.appUser.id);
+      const albums =
+        req.locals.app_version < 12
+          ? await deprecated_findAlbums(req.locals.appUser.id)
+          : await findAlbums(
+              req.locals.appUser.id,
+              req.query.sorted_status,
+              Number(req.query.lastAlbumId),
+            );
 
       if (!albums.length) {
         return res.status(200).json({ albums: [] });
