@@ -10,11 +10,12 @@ import { checkValidBaseUrl } from "@/api/images/services/images.js";
 import { handleError } from "@/api/utils/index.js";
 import { ApiAlbumWithFirstImage } from "@/api/albums/services/types.js";
 import { deprecated_findAlbums } from "./services/deprecated/v0/index.js";
+import { SortOptions } from "@/api/images/types.js";
 
 export const AlbumController = Object.freeze({
   getAlbumWithFirstImages: async (
     req: Request & {
-      query: { sorted_status: "keep" | "delete"; lastAlbumId: string };
+      query: { sorted_status: SortOptions; lastAlbumId: string };
     },
     res: Response,
   ) => {

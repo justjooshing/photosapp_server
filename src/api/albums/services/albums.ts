@@ -6,10 +6,11 @@ import {
   SchemaImages,
 } from "@/api/images/services/types.js";
 import { ApiAlbum, ApiAlbumWithFirstImage } from "./types.js";
+import { SortOptions } from "@/api/images/types.js";
 
 export const findAlbums = async (
   userId: number,
-  sorted_status: "keep" | "delete",
+  sorted_status: SortOptions,
   lastAlbumId?: number,
 ): Promise<ApiAlbum[]> => {
   const albums = await prisma.album.findMany({
@@ -26,12 +27,12 @@ export const findAlbums = async (
     where: {
       userId,
       images:
-        sorted_status === "delete"
+        sorted_status === SortOptions.DELETE
           ? {
               // If delete, some should be 'delete'
               some: {
                 AND: {
-                  sorted_status: "delete",
+                  sorted_status: SortOptions.DELETE,
                   actually_deleted: null,
                 },
               },
@@ -45,7 +46,7 @@ export const findAlbums = async (
               every: {
                 NOT: {
                   AND: {
-                    sorted_status: "delete",
+                    sorted_status: SortOptions.DELETE,
                     actually_deleted: null,
                   },
                 },
@@ -76,7 +77,8 @@ export const findAlbums = async (
         albumCounts.set(sorted_album_id, { keepCount: 0, deleteCount: 0 });
       }
       const albumCount = albumCounts.get(sorted_album_id);
-      const type = sorted_status === "keep" ? "keepCount" : "deleteCount";
+      const type =
+        sorted_status === SortOptions.KEEP ? "keepCount" : "deleteCount";
       albumCount[type] = count;
     },
   );
@@ -113,8 +115,9 @@ export const findFirstImagesOfAlbums = async (
         firstImages.set(image.sorted_album_id, image);
       } else if (
         // override with first _deleted_ image if necessary
-        image.sorted_status === "delete" &&
-        firstImages.get(image.sorted_album_id)?.sorted_status !== "delete"
+        image.sorted_status === SortOptions.DELETE &&
+        firstImages.get(image.sorted_album_id)?.sorted_status !==
+          SortOptions.DELETE
       ) {
         firstImages.set(image.sorted_album_id, image);
       }

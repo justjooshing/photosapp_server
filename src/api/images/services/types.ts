@@ -7,8 +7,6 @@ import {
 import { MediaItemSearch } from "@/api/third-party/types.js";
 export { SchemaImages, SchemaAlbum, SchemaUser, SchemaImagesSets };
 
-export type ImageType = "today" | "similar" | "oldest";
-
 export interface LoadImagesParams {
   access_token: string;
   bodyParams?: MediaItemSearch;

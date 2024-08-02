@@ -11,6 +11,7 @@ import { getOrCreateCurrentAlbum } from "@/api/albums/services/albums.js";
 import { ImageType, SchemaImages } from "@/api/images/services/types.js";
 import { prisma } from "@/loaders/prisma.js";
 import { queryByImageType } from "@/api/images/services/queries.js";
+import { SortOptions } from "@/api/images/types.js";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
@@ -58,7 +59,7 @@ export const ImagesController = Object.freeze({
 
       const updatedImage = await (async (): Promise<SchemaImages> => {
         if (!body) return currentImage;
-        if (body.sorted_status === "keep" || body.sorted_status === "delete") {
+        if (Object.values(SortOptions).includes(body.sorted_status)) {
           await sortImageSet(appUser.id, currentImage);
           return await updateImagesByChoice(
             currentAlbum.id,

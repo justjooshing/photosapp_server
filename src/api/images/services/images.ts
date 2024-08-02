@@ -24,6 +24,7 @@ import {
   baseBodyParams,
   getImageSize,
 } from "@/api/third-party/images.js";
+import { SortOptions } from "@/api/images/types.js";
 
 export const loadImageSet = async ({
   access_token,
@@ -404,7 +405,7 @@ export const addFreshBaseUrls = async (
 
 export const updateImagesByChoice = async (
   albumId: number,
-  sorted_status: "keep" | "delete",
+  sorted_status: SortOptions,
   imageId: number,
 ): Promise<SchemaImages> =>
   await prisma.images.update({
@@ -506,7 +507,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
   const totalDeleted = await prisma.images.aggregate({
     where: {
       userId,
-      sorted_status: "delete",
+      sorted_status: SortOptions.DELETE,
       actually_deleted: { not: null },
       mime_type: {
         not: "video/mp4",
@@ -519,7 +520,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
   const totalSorted = await prisma.images.aggregate({
     where: {
       userId,
-      sorted_status: { in: ["keep", "delete"] },
+      sorted_status: { in: Object.values(SortOptions) },
       mime_type: {
         not: "video/mp4",
       },
@@ -544,7 +545,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
   const markDeleteNotDeleted = await prisma.images.aggregate({
     where: {
       userId,
-      sorted_status: "delete",
+      sorted_status: SortOptions.DELETE,
       actually_deleted: null,
       mime_type: {
         not: "video/mp4",
@@ -553,6 +554,41 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
     _sum: { size: true },
     _count: { size: true },
   });
+
+  // const deletedAlbums = await prisma.album.count({
+  //   where: {
+  //     userId,
+  //     images: {
+  //       some: {
+  //         AND: {
+  //           sorted_status: "delete",
+  //           actually_deleted: null,
+  //         },
+  //       },
+  //     },
+  //   },
+  // });
+
+  // const keptAlbums = await prisma.album.count({
+  //   where: {
+  //     userId,
+  //     images: {
+  //       // Otherwise the album should contain some 'keep'
+  //       // but none that are to be deleted but not actually deleted
+  //       some: {
+  //         sorted_status: "keep",
+  //       },
+  //       every: {
+  //         NOT: {
+  //           AND: {
+  //             sorted_status: "delete",
+  //             actually_deleted: null,
+  //           },
+  //         },
+  //       },
+  //     },
+  //   },
+  // });
 
   const sortedAlbums = await prisma.images
     .groupBy({
@@ -565,9 +601,12 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
         },
       },
     })
-    .then((data) =>
-      Object.groupBy(data, ({ sorted_status }) => sorted_status ?? "null"),
-    );
+    .then((data) => {
+      return Object.groupBy(
+        data,
+        ({ sorted_status }) => sorted_status ?? "null",
+      );
+    });
 
   return {
     markDeleteNotDeleted: {

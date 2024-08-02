@@ -1,5 +1,6 @@
 import { prisma } from "@/loaders/prisma.js";
 import { ApiAlbum } from "../../types.js";
+import { SortOptions } from "@/api/images/types.js";
 
 export const deprecated_findAlbums = async (
   userId: number,
@@ -44,7 +45,8 @@ export const deprecated_findAlbums = async (
         albumCounts.set(sorted_album_id, { keepCount: 0, deleteCount: 0 });
       }
       const albumCount = albumCounts.get(sorted_album_id);
-      const type = sorted_status === "keep" ? "keepCount" : "deleteCount";
+      const type =
+        sorted_status === SortOptions.KEEP ? "keepCount" : "deleteCount";
       albumCount[type] = count;
     },
   );
