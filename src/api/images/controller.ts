@@ -8,10 +8,10 @@ import {
 } from "@/api/images/services/images.js";
 import { handleError } from "@/api/utils/index.js";
 import { getOrCreateCurrentAlbum } from "@/api/albums/services/albums.js";
-import { ImageType, SchemaImages } from "@/api/images/services/types.js";
+import { SchemaImages } from "@/api/images/services/types.js";
 import { prisma } from "@/loaders/prisma.js";
 import { queryByImageType } from "@/api/images/services/queries.js";
-import { SortOptions } from "@/api/images/types.js";
+import { ImageType, SortOptions } from "@/api/images/types.js";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (req: Request, res: Response) => {
