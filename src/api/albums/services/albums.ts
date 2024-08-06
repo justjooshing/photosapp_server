@@ -188,7 +188,7 @@ export const getOrCreateCurrentAlbum = async (
   // group under image_sets if belonging to a set
   const albumTitle = image.image_set_id
     ? `Set ${image.image_set_id}`
-    : new Date().toDateString();
+    : new Date(image.created_at).toDateString();
 
   const imageRelevantAlbum = await prisma.album.findUnique({
     where: {
