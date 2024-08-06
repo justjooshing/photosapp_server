@@ -31,18 +31,17 @@ export const getSimilarImages = async (userId: number) => {
         id: "asc",
       },
     ],
-  });
-
-  const images = await prisma.images.findMany({
-    where: {
-      userId,
-      sorted_album_id: null,
-      id: {
-        in: imageSet?.unsorted_image_ids,
+    include: {
+      images: {
+        where: {
+          userId,
+          sorted_album_id: null,
+        },
       },
     },
   });
-  return images;
+
+  return imageSet?.images || [];
 };
 
 // update to prisma query
