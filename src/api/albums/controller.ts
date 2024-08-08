@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import {
   findAlbums,
   selectAlbum,
-  selectAlbumImages,
   updateWithFirstImage,
 } from "@/api/albums/services/albums.js";
 import { checkValidBaseUrl } from "@/api/images/services/images.js";
@@ -68,11 +67,18 @@ export const AlbumController = Object.freeze({
 
       const numAlbumId = Number(albumId);
       const albumDetails = await selectAlbum(appUser.id, numAlbumId);
-      const images = await selectAlbumImages(appUser.id, numAlbumId);
-      const freshUrlImages = await checkValidBaseUrl(access_token, images);
-      res
+      if (!albumDetails) {
+        return res.status(404).end();
+      }
+
+      const freshUrlImages = await checkValidBaseUrl(
+        access_token,
+        albumDetails.images,
+      );
+
+      return res
         .status(200)
-        .json({ title: albumDetails?.title, images: freshUrlImages });
+        .json({ title: albumDetails.title, images: freshUrlImages });
     } catch (err) {
       handleError({
         error: { from: "Images in specific album", err },

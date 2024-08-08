@@ -162,24 +162,21 @@ export const getOrCreateCurrentAlbum = async (
 export const selectAlbum = async (
   userId: number,
   albumId: number,
-): Promise<SchemaAlbum | null> =>
+): Promise<(SchemaAlbum & { images: SchemaImages[] }) | null> =>
   await prisma.album.findUnique({
     where: {
       id: albumId,
       userId,
     },
-  });
-
-export const selectAlbumImages = async (
-  userId: number,
-  albumId: number,
-): Promise<SchemaImages[]> =>
-  await prisma.images.findMany({
-    orderBy: [{ created_at: "asc" }],
-    where: {
-      sorted_album_id: albumId,
-      userId,
-      actually_deleted: null,
-      ...excludeMimeType,
+    include: {
+      images: {
+        orderBy: [{ created_at: "asc" }],
+        where: {
+          sorted_album_id: albumId,
+          userId,
+          actually_deleted: null,
+          ...excludeMimeType,
+        },
+      },
     },
   });
