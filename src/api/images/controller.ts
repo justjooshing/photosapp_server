@@ -21,10 +21,9 @@ export const ImagesController = Object.freeze({
         appUser: { id: userId },
       } = req.locals;
       const { type }: { type?: ImageType } = req.query;
-
       const filterOptions = ["today", "similar", "oldest"];
       if (typeof type !== "string" || !filterOptions.includes(type)) {
-        return res.send(400).json({ message: "Invalid type param" });
+        return res.status(400).json({ message: "Invalid type param" });
       }
       const images = await queryByImageType(type, userId);
       const withUrls = await checkValidBaseUrl(access_token, images);
