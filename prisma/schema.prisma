@@ -44,7 +44,7 @@ model images {
   actually_deleted     DateTime?   @db.Timestamptz(3)
   image_set            image_sets? @relation(fields: [image_set_id], references: [id])
   image_set_id         Int?
-  size                 BigInt?
+  size                 String?
 
   @@map("Images")
 }

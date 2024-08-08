@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Images" ALTER COLUMN "size" SET DATA TYPE TEXT;
