@@ -85,35 +85,19 @@ export const updateWithFirstImage = async (
   albums: ApiAlbum[],
   access_token: string,
 ) => {
-  const firstImages = new Map<number, SchemaImages>();
+  const firstImages = albums.map((album) => album.images[0]);
+  const imagesWithUrls = await checkValidBaseUrl(access_token, firstImages);
 
-  albums.forEach((album) => {
-    firstImages.set(album.id, album.images[0]);
-  });
-
-  return appendImagesWithFreshUrls(access_token, firstImages, albums);
-};
-
-export const appendImagesWithFreshUrls = async (
-  access_token: string,
-  firstImages: Map<number, SchemaImages>,
-  albums: ApiAlbum[],
-) => {
-  const imagesWithUrls = await checkValidBaseUrl(
-    access_token,
-    Array.from(firstImages.values()),
-  );
-
-  const imagesMap = new Map<string, ApiImages>();
+  const imagesMap = new Map<number, ApiImages>();
 
   for (const image of imagesWithUrls) {
     if (image.sorted_album_id) {
-      imagesMap.set(image.sorted_album_id?.toString(), image);
+      imagesMap.set(image.sorted_album_id, image);
     }
   }
 
   const albumsWithPhotoUrls = albums.map((album) => {
-    const matchingImage = imagesMap.get(album.id.toString());
+    const matchingImage = imagesMap.get(album.id);
 
     return {
       ...album,
