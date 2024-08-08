@@ -1,15 +1,17 @@
 import { Request, Response } from "express";
 import {
-  appendImagesWithFreshUrls,
   findAlbums,
-  findFirstImagesOfAlbums,
   selectAlbum,
   selectAlbumImages,
+  updateWithFirstImage,
 } from "@/api/albums/services/albums.js";
 import { checkValidBaseUrl } from "@/api/images/services/images.js";
 import { handleError } from "@/api/utils/index.js";
-import { ApiAlbumWithFirstImage } from "@/api/albums/services/types.js";
-import { deprecated_findAlbums } from "./services/deprecated/v0/index.js";
+import {
+  deprecated_findAlbums_12,
+  deprecated_findAlbums_14,
+  deprecated_updateWithFirstImage_14,
+} from "./services/deprecated/index.js";
 import { SortOptions } from "@/api/images/types.js";
 
 export const AlbumController = Object.freeze({
@@ -20,31 +22,35 @@ export const AlbumController = Object.freeze({
     res: Response,
   ) => {
     try {
-      const albums =
-        req.locals.app_version < 12
-          ? await deprecated_findAlbums(req.locals.appUser.id)
-          : await findAlbums(
-              req.locals.appUser.id,
-              req.query.sorted_status,
-              Number(req.query.lastAlbumId),
-            );
+      const albums = await (async () => {
+        if (req.locals.app_version < 12) {
+          return await deprecated_findAlbums_12(req.locals.appUser.id);
+        }
+        if (req.locals.app_version < 14) {
+          return await deprecated_findAlbums_14(
+            req.locals.appUser.id,
+            req.query.sorted_status,
+            Number(req.query.lastAlbumId),
+          );
+        }
+        return await findAlbums(
+          req.locals.appUser.id,
+          req.query.sorted_status,
+          Number(req.query.lastAlbumId),
+        );
+      })();
 
       if (!albums.length) {
         return res.status(200).json({ albums: [] });
       }
 
-      const firstImages = await findFirstImagesOfAlbums(albums);
+      const data = await (async () => {
+        if (req.locals.app_version < 14) {
+          return await deprecated_updateWithFirstImage_14(albums, req);
+        }
+        return updateWithFirstImage(albums, req.locals.access_token);
+      })();
 
-      const data: ApiAlbumWithFirstImage[] = firstImages.size
-        ? await appendImagesWithFreshUrls(
-            req.locals.access_token,
-            firstImages,
-            albums,
-          )
-        : albums.map((album) => ({
-            ...album,
-            firstImage: undefined,
-          }));
       return res.json({ albums: data });
     } catch (err) {
       handleError({

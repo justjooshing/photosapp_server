@@ -5,25 +5,19 @@ import {
   SchemaAlbum,
   SchemaImages,
 } from "@/api/images/services/types.js";
-import { ApiAlbum, ApiAlbumWithFirstImage } from "./types.js";
+import { ApiAlbum } from "./types.js";
 import { SortOptions } from "@/api/images/types.js";
 
 export const findAlbums = async (
   userId: number,
   sorted_status: SortOptions,
   lastAlbumId?: number,
-): Promise<ApiAlbum[]> => {
-  const albums = await prisma.album.findMany({
+) =>
+  prisma.album.findMany({
     orderBy: {
       created_at: "desc",
     },
     take: 10,
-    ...(lastAlbumId && {
-      skip: 1,
-      cursor: {
-        id: lastAlbumId,
-      },
-    }),
     where: {
       userId,
       images:
@@ -41,7 +35,10 @@ export const findAlbums = async (
               // Otherwise the album should contain some 'keep'
               // but none that are to be deleted but not actually deleted
               some: {
-                sorted_status: "keep",
+                AND: {
+                  sorted_status: "keep",
+                  actually_deleted: null,
+                },
               },
               every: {
                 NOT: {
@@ -53,84 +50,54 @@ export const findAlbums = async (
               },
             },
     },
-  });
-
-  // Get counts sorted_statuses groupedBy albumId
-  const counts = await prisma.images.groupBy({
-    by: ["sorted_album_id", "sorted_status"],
-    where: {
-      sorted_album_id: {
-        in: albums.map(({ id }) => id),
+    include: {
+      images: {
+        where: {
+          actually_deleted: null,
+          sorted_status,
+          mime_type: {
+            not: "video/mp4",
+          },
+        },
+        take: 1,
       },
-      actually_deleted: null,
-    },
-    _count: {
-      sorted_status: true,
-    },
-  });
-
-  // Map each count to respective albums
-  const albumCounts = new Map();
-  counts.forEach(
-    ({ _count: { sorted_status: count }, sorted_album_id, sorted_status }) => {
-      if (!albumCounts.has(sorted_album_id)) {
-        albumCounts.set(sorted_album_id, { keepCount: 0, deleteCount: 0 });
-      }
-      const albumCount = albumCounts.get(sorted_album_id);
-      const type =
-        sorted_status === SortOptions.KEEP ? "keepCount" : "deleteCount";
-      albumCount[type] = count;
-    },
-  );
-
-  return albums.map((album) => ({
-    ...album,
-    ...albumCounts.get(album.id),
-  }));
-};
-
-export const findFirstImagesOfAlbums = async (
-  albums: SchemaAlbum[],
-): Promise<Map<number, SchemaImages>> => {
-  const images = await prisma.images.findMany({
-    where: {
-      sorted_album_id: {
-        in: albums.map(({ id }) => id),
-      },
-      actually_deleted: null,
-      mime_type: {
-        not: "video/mp4",
+      _count: {
+        select: {
+          images: {
+            where: {
+              sorted_status,
+            },
+          },
+        },
       },
     },
-    orderBy: {
-      created_at: "asc",
-    },
+    // For pagination
+    ...(lastAlbumId && {
+      skip: 1,
+      cursor: {
+        id: lastAlbumId,
+      },
+    }),
   });
 
+export const updateWithFirstImage = async (
+  albums: ApiAlbum[],
+  access_token: string,
+) => {
   const firstImages = new Map<number, SchemaImages>();
-  images.forEach((image) => {
-    if (image.sorted_album_id) {
-      // Set first image of album
-      if (!firstImages.has(image.sorted_album_id)) {
-        firstImages.set(image.sorted_album_id, image);
-      } else if (
-        // override with first _deleted_ image if necessary
-        image.sorted_status === SortOptions.DELETE &&
-        firstImages.get(image.sorted_album_id)?.sorted_status !==
-          SortOptions.DELETE
-      ) {
-        firstImages.set(image.sorted_album_id, image);
-      }
-    }
+
+  albums.forEach((album) => {
+    firstImages.set(album.id, album.images[0]);
   });
-  return firstImages;
+
+  return appendImagesWithFreshUrls(access_token, firstImages, albums);
 };
 
 export const appendImagesWithFreshUrls = async (
   access_token: string,
   firstImages: Map<number, SchemaImages>,
   albums: ApiAlbum[],
-): Promise<ApiAlbumWithFirstImage[]> => {
+) => {
   const imagesWithUrls = await checkValidBaseUrl(
     access_token,
     Array.from(firstImages.values()),
@@ -149,7 +116,7 @@ export const appendImagesWithFreshUrls = async (
 
     return {
       ...album,
-      firstImage: matchingImage,
+      images: matchingImage ? [matchingImage] : [],
     };
   });
   return albumsWithPhotoUrls;
