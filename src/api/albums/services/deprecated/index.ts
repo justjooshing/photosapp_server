@@ -8,6 +8,7 @@ import {
   SchemaImages,
 } from "@/api/images/services/types.js";
 import { checkValidBaseUrl } from "@/api/images/services/images.js";
+import { excludeMimeType } from "@/api/utils/index.js";
 
 export const deprecated_findAlbums_12 = async (
   userId: number,
@@ -100,9 +101,7 @@ export const deprecated_findAlbums_14 = async (
                 AND: {
                   sorted_status: "keep",
                   actually_deleted: null,
-                  mime_type: {
-                    not: "video/mp4",
-                  },
+                  ...excludeMimeType,
                 },
               },
               every: {
@@ -178,9 +177,7 @@ export const findFirstImagesOfAlbums = async (
         in: albums.map(({ id }) => id),
       },
       actually_deleted: null,
-      mime_type: {
-        not: "video/mp4",
-      },
+      ...excludeMimeType,
     },
     orderBy: {
       created_at: "asc",

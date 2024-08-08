@@ -16,7 +16,11 @@ import {
   MediaItemResultSuccess,
 } from "@/api/third-party/types.js";
 import { group_similar } from "./queries.js";
-import { bigIntToString, prismaRawSql } from "@/api/utils/index.js";
+import {
+  bigIntToString,
+  excludeMimeType,
+  prismaRawSql,
+} from "@/api/utils/index.js";
 import { updateUserLastUpdate } from "@/api/user/services/user.js";
 import pLimit from "p-limit";
 import {
@@ -509,9 +513,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
       userId,
       sorted_status: SortOptions.DELETE,
       actually_deleted: { not: null },
-      mime_type: {
-        not: "video/mp4",
-      },
+      ...excludeMimeType,
     },
     _sum: { size: true },
     _count: { size: true },
@@ -521,9 +523,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
     where: {
       userId,
       sorted_status: { in: Object.values(SortOptions) },
-      mime_type: {
-        not: "video/mp4",
-      },
+      ...excludeMimeType,
     },
     _sum: { size: true },
     _count: { size: true },
@@ -534,9 +534,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
       userId,
       size: { not: null },
       actually_deleted: null,
-      mime_type: {
-        not: "video/mp4",
-      },
+      ...excludeMimeType,
     },
     _sum: { size: true },
     _count: { size: true },
@@ -547,9 +545,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
       userId,
       sorted_status: SortOptions.DELETE,
       actually_deleted: null,
-      mime_type: {
-        not: "video/mp4",
-      },
+      ...excludeMimeType,
     },
     _sum: { size: true },
     _count: { size: true },
@@ -596,9 +592,7 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
       where: {
         userId,
         actually_deleted: null,
-        mime_type: {
-          not: "video/mp4",
-        },
+        ...excludeMimeType,
       },
     })
     .then((data) => {

@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { SchemaImages } from "./types.js";
-import { prismaRawSql } from "@/api/utils/index.js";
+import { excludeMimeType, prismaRawSql } from "@/api/utils/index.js";
 import { prisma } from "@/loaders/prisma.js";
 import { ImageType } from "../types.js";
 
@@ -12,6 +12,7 @@ export const todayQuery = (
   AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE) 
   AND EXTRACT(DAY FROM created_at) = EXTRACT(DAY FROM CURRENT_DATE)
   AND mime_type != 'video/mp4'
+  AND mime_type IS NOT NULL
   ORDER BY created_at ASC, id ASC
   LIMIT 5`;
 
@@ -51,9 +52,7 @@ const getOldestImages = async (userId: number) =>
       userId,
       updated_at: null,
       actually_deleted: null,
-      mime_type: {
-        not: "video/mp4",
-      },
+      ...excludeMimeType,
     },
     orderBy: [
       {
@@ -87,6 +86,7 @@ export const group_similar = (userId: number) =>
     AND updated_at IS NULL
     AND actually_deleted IS NULL
     AND mime_type != 'video/mp4'
+    AND mime_type IS NOT NULL
   GROUP BY minute
   HAVING count(*) > 1
   ORDER BY minute`;

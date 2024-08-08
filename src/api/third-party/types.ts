@@ -21,6 +21,7 @@ interface MediaItems<T> {
   productUrl: string;
   baseUrl: string;
   mimeType:
+    | null
     | "video/mp4"
     | "image/jpeg"
     | "image/heif"

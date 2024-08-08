@@ -7,6 +7,7 @@ import {
 } from "@/api/images/services/types.js";
 import { ApiAlbum } from "./types.js";
 import { SortOptions } from "@/api/images/types.js";
+import { excludeMimeType } from "@/api/utils/index.js";
 
 export const findAlbums = async (
   userId: number,
@@ -28,6 +29,7 @@ export const findAlbums = async (
                 AND: {
                   sorted_status: SortOptions.DELETE,
                   actually_deleted: null,
+                  ...excludeMimeType,
                 },
               },
             }
@@ -38,6 +40,7 @@ export const findAlbums = async (
                 AND: {
                   sorted_status: "keep",
                   actually_deleted: null,
+                  ...excludeMimeType,
                 },
               },
               every: {
@@ -55,9 +58,7 @@ export const findAlbums = async (
         where: {
           actually_deleted: null,
           sorted_status,
-          mime_type: {
-            not: "video/mp4",
-          },
+          ...excludeMimeType,
         },
         take: 1,
       },
@@ -195,8 +196,6 @@ export const selectAlbumImages = async (
       sorted_album_id: albumId,
       userId,
       actually_deleted: null,
-      mime_type: {
-        not: "video/mp4",
-      },
+      ...excludeMimeType,
     },
   });
