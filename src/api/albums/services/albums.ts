@@ -26,29 +26,24 @@ export const findAlbums = async (
           ? {
               // If delete, some should be 'delete'
               some: {
-                AND: {
-                  sorted_status: SortOptions.DELETE,
-                  actually_deleted: null,
-                  ...excludeMimeType,
-                },
+                sorted_status: SortOptions.DELETE,
+                actually_deleted: null,
+                ...excludeMimeType,
               },
             }
           : {
               // Otherwise the album should contain some 'keep'
               // but none that are to be deleted but not actually deleted
               some: {
-                AND: {
-                  sorted_status: "keep",
-                  actually_deleted: null,
-                  ...excludeMimeType,
-                },
+                sorted_status: SortOptions.KEEP,
+                actually_deleted: null,
+                ...excludeMimeType,
               },
               every: {
                 NOT: {
-                  AND: {
-                    sorted_status: SortOptions.DELETE,
-                    actually_deleted: null,
-                  },
+                  sorted_status: SortOptions.DELETE,
+                  actually_deleted: null,
+                  ...excludeMimeType,
                 },
               },
             },
@@ -56,8 +51,8 @@ export const findAlbums = async (
     include: {
       images: {
         where: {
-          actually_deleted: null,
           sorted_status,
+          actually_deleted: null,
           ...excludeMimeType,
         },
         take: 1,
@@ -67,6 +62,8 @@ export const findAlbums = async (
           images: {
             where: {
               sorted_status,
+              actually_deleted: null,
+              ...excludeMimeType,
             },
           },
         },
@@ -170,7 +167,6 @@ export const selectAlbum = async (
     },
     include: {
       images: {
-        orderBy: [{ created_at: "asc" }],
         where: {
           sorted_album_id: albumId,
           userId,

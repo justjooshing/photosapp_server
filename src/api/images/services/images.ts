@@ -551,56 +551,40 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
     _count: { size: true },
   });
 
-  // const deletedAlbums = await prisma.album.count({
-  //   where: {
-  //     userId,
-  //     images: {
-  //       some: {
-  //         AND: {
-  //           sorted_status: "delete",
-  //           actually_deleted: null,
-  //         },
-  //       },
-  //     },
-  //   },
-  // });
-
-  // const keptAlbums = await prisma.album.count({
-  //   where: {
-  //     userId,
-  //     images: {
-  //       // Otherwise the album should contain some 'keep'
-  //       // but none that are to be deleted but not actually deleted
-  //       some: {
-  //         sorted_status: "keep",
-  //       },
-  //       every: {
-  //         NOT: {
-  //           AND: {
-  //             sorted_status: "delete",
-  //             actually_deleted: null,
-  //           },
-  //         },
-  //       },
-  //     },
-  //   },
-  // });
-
-  const sortedAlbums = await prisma.images
-    .groupBy({
-      by: ["sorted_album_id", "sorted_status"],
-      where: {
-        userId,
-        actually_deleted: null,
-        ...excludeMimeType,
+  const deletedAlbums = await prisma.album.count({
+    where: {
+      userId,
+      images: {
+        some: {
+          sorted_status: SortOptions.DELETE,
+          actually_deleted: null,
+          ...excludeMimeType,
+        },
       },
-    })
-    .then((data) => {
-      return Object.groupBy(
-        data,
-        ({ sorted_status }) => sorted_status ?? "null",
-      );
-    });
+    },
+  });
+
+  const keptAlbums = await prisma.album.count({
+    where: {
+      userId,
+      images: {
+        // Otherwise the album should contain some 'keep'
+        // but none that are to be deleted but not actually deleted
+        some: {
+          sorted_status: SortOptions.KEEP,
+          actually_deleted: null,
+          ...excludeMimeType,
+        },
+        every: {
+          NOT: {
+            sorted_status: SortOptions.DELETE,
+            actually_deleted: null,
+            ...excludeMimeType,
+          },
+        },
+      },
+    },
+  });
 
   return {
     markDeleteNotDeleted: {
@@ -620,11 +604,11 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
       size: bigIntToString(totalDeleted._sum.size),
     },
     albumsToDelete: {
-      count: sortedAlbums.delete?.length || 0,
+      count: deletedAlbums || 0,
       size: bigIntToString(markDeleteNotDeleted._sum.size),
     },
     albumsKept: {
-      count: sortedAlbums.keep?.length || 0,
+      count: keptAlbums || 0,
       size: (
         (Number(totalImages._sum.size) || 0) -
         (Number(markDeleteNotDeleted._sum.size) || 0)
