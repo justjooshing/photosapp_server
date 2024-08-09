@@ -33,8 +33,6 @@ export const AlbumController = Object.freeze({
       handleError({
         error: { from: "fetching albums", err },
         res,
-        callback: () =>
-          res.status(500).json({ message: "Error fetching albums" }),
       });
     }
   },
@@ -61,9 +59,6 @@ export const AlbumController = Object.freeze({
       handleError({
         error: { from: "Images in specific album", err },
         res,
-        callback: () => {
-          res.status(500).json({ message: "Image fetching issue" });
-        },
       });
     }
   },

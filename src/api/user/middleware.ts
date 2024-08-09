@@ -13,7 +13,7 @@ export const getUserData = async (
     const googleUser = await getGoogleUser(access_token);
     const appUser = await findUser(googleUser);
     if (!appUser) {
-      return res.status(404).json({ message: new Error("Not found") });
+      return res.status(404).end();
     }
     req.locals.appUser = appUser;
     next();
@@ -21,7 +21,6 @@ export const getUserData = async (
     return handleError({
       error: { from: "getUserData middleware", err },
       res,
-      callback: () => res.status(401).json({ message: err }),
     });
   }
 };

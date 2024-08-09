@@ -17,7 +17,7 @@ export const checkAppVersion = (
     return handleError({
       error: { from: "checkAppVersion", err },
       res,
-      callback: () => res.status(401).json({ message: "Auth issue" }),
+      callback: () => res.status(400).end(),
     });
   }
 };

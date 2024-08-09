@@ -32,7 +32,6 @@ export const ImagesController = Object.freeze({
       handleError({
         error: { from: "Getting images", err },
         res,
-        callback: () => res.status(500).end(),
       });
     }
   },
@@ -83,8 +82,6 @@ export const ImagesController = Object.freeze({
       handleError({
         error: { from: "Updating image", err },
         res,
-        callback: () =>
-          res.status(500).json({ message: "Error updating image" }),
       });
     }
   },
@@ -96,8 +93,6 @@ export const ImagesController = Object.freeze({
       handleError({
         error: { from: "Counts", err },
         res,
-        callback: () =>
-          res.status(500).json({ message: "Error fetching counts" }),
       });
     }
   },

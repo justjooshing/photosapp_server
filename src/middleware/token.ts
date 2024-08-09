@@ -22,7 +22,7 @@ export const checkJWT = async (
     return handleError({
       error: { from: "JWT", err },
       res,
-      callback: () => res.status(401).json({ message: "Auth issue" }),
+      callback: () => res.status(401).end(),
     });
   }
 };
@@ -57,7 +57,7 @@ export const refreshAuthToken = async (
     return handleError({
       error: { from: "Refresh auth token", err },
       res,
-      callback: () => res.status(401).json({ message: "Auth issue" }),
+      callback: () => res.status(401).end(),
     });
   }
 };

@@ -44,8 +44,6 @@ export const UserController = Object.freeze({
       return handleError({
         error: { err, from: "Delete user" },
         res,
-        callback: () =>
-          res.status(500).json({ message: "Error deleting user account" }),
       });
     }
   },

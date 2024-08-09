@@ -14,9 +14,6 @@ export const validateGetAlbums = (
     return handleError({
       error: { from: "validateGetAlbums", err },
       res,
-      callback: () => {
-        res.status(400).json({ message: "Invalid properties" });
-      },
     });
   }
 };

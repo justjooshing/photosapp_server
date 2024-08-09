@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/loaders/prisma.js";
 import { Response } from "express";
+import { GaxiosError } from "gaxios";
+import { ZodError } from "zod";
 
 export const prismaRawSql = async <SchemaType>(sqlQuery: Prisma.Sql) =>
   await prisma.$queryRaw<SchemaType>(sqlQuery);
@@ -10,16 +12,21 @@ export const handleError = ({
   res,
   callback,
 }: {
-  error: { from: string; err: Error | unknown };
+  error: { from: string; err: GaxiosError | Error | unknown };
   res: Response;
-  callback: () => void;
+  callback?: () => void;
 }) => {
   console.error(`${error.from} ERROR`, error.err);
-  if (error.err instanceof Error) {
-    return callback();
-  } else {
-    return res.status(500).json({ message: "Something went wrong" });
+  if (error.err instanceof ZodError) {
+    return res.status(400).end();
   }
+  if ((error.err as GaxiosError)?.response?.status) {
+    return res.status((error.err as GaxiosError).response!.status || 500).end();
+  }
+  if (error.err instanceof Error && callback) {
+    return callback();
+  }
+  return res.status(500).end();
 };
 
 export const bigIntToString = (val: bigint | null) => {
