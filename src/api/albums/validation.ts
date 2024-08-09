@@ -10,3 +10,7 @@ export const zAlbumParams = z.object({
     .number({ invalid_type_error: "Invalid album id" })
     .optional(),
 });
+
+export const zSingleAlbumId = z.object({
+  albumId: z.coerce.number({ invalid_type_error: "Album ID is not a number" }),
+});
