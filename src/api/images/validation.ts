@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { SortOptions } from "@/api/images/types.js";
+import { ImageType, SortOptions } from "@/api/images/types.js";
+
+export const zImageType = z.object({
+  type: z.nativeEnum(ImageType, {
+    required_error: "Missing type param",
+    invalid_type_error: "Invalid type param",
+  }),
+});
 
 export const zImageId = z.object({
   id: z.coerce.number({

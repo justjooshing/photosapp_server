@@ -3,4 +3,8 @@ export enum SortOptions {
   DELETE = "delete",
 }
 
-export type ImageType = "today" | "similar" | "oldest";
+export enum ImageType {
+  TODAY = "today",
+  similar = "similar",
+  OLDEST = "oldest",
+}

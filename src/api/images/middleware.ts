@@ -1,6 +1,22 @@
-import { zImage, zImageId } from "./validation.js";
+import { zImage, zImageId, zImageType } from "./validation.js";
 import { handleError } from "@/api/utils/index.js";
 import { NextFunction, Request, Response } from "express";
+
+export const validateImageType = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    zImageType.parse({ type: req.query.type });
+    next();
+  } catch (err) {
+    return handleError({
+      error: { from: "Single image validation", err },
+      res,
+    });
+  }
+};
 
 export const validateUpdateSingleImage = (
   req: Request,
@@ -15,9 +31,6 @@ export const validateUpdateSingleImage = (
     return handleError({
       error: { from: "Single image validation", err },
       res,
-      callback: () => {
-        res.status(400).json({ message: "Invalid properties" });
-      },
     });
   }
 };

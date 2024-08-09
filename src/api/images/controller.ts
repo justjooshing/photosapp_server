@@ -14,18 +14,17 @@ import { queryByImageType } from "@/api/images/services/queries.js";
 import { ImageType, SortOptions } from "@/api/images/types.js";
 
 export const ImagesController = Object.freeze({
-  getImagesByType: async (req: Request, res: Response) => {
+  getImagesByType: async (
+    req: Request & { query: { type: ImageType } },
+    res: Response,
+  ) => {
     try {
       const {
         access_token,
         appUser: { id: userId },
       } = req.locals;
-      const { type }: { type?: ImageType } = req.query;
-      const filterOptions = ["today", "similar", "oldest"];
-      if (typeof type !== "string" || !filterOptions.includes(type)) {
-        return res.status(400).json({ message: "Invalid type param" });
-      }
-      const images = await queryByImageType(type, userId);
+
+      const images = await queryByImageType(req.query.type, userId);
       const withUrls = await checkValidBaseUrl(access_token, images);
 
       return res.status(200).json(withUrls);
@@ -33,8 +32,7 @@ export const ImagesController = Object.freeze({
       handleError({
         error: { from: "Getting images", err },
         res,
-        callback: () =>
-          res.status(500).json({ message: "Error getting images" }),
+        callback: () => res.status(500).end(),
       });
     }
   },
