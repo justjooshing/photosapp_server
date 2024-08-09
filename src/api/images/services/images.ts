@@ -312,12 +312,7 @@ export const checkValidBaseUrl = async (
   const withFreshUrls = await addFreshBaseUrls(access_token, invalidBaseUrls);
   const allImages: SchemaImages[] = validBaseUrls.concat(withFreshUrls);
 
-  const sortImagesByDate = (a: SchemaImages, b: SchemaImages) =>
-    a.created_at.getTime() - b.created_at.getTime();
-
-  const sortedImages = allImages
-    .sort(sortImagesByDate)
-    .map(shapeImagesResponse);
+  const sortedImages = allImages.map(shapeImagesResponse);
   return sortedImages;
 };
 

@@ -50,6 +50,9 @@ export const findAlbums = async (
     },
     include: {
       images: {
+        orderBy: {
+          created_at: "desc",
+        },
         where: {
           sorted_status,
           actually_deleted: null,
@@ -167,6 +170,7 @@ export const selectAlbum = async (
     },
     include: {
       images: {
+        orderBy: { created_at: "desc" },
         where: {
           sorted_album_id: albumId,
           userId,
