@@ -14,12 +14,20 @@ const redirect_uri = CONFIG.redirect_uri;
 
 export const AuthController = Object.freeze({
   appLogin: (_: Request, res: Response) => {
-    const loginLink = oauth2Client.generateAuthUrl({
-      access_type: "offline",
-      scope: CONFIG.oauth2Credentials.scopes,
-    });
+    try {
+      const loginLink = oauth2Client.generateAuthUrl({
+        access_type: "offline",
+        scope: CONFIG.oauth2Credentials.scopes,
+      });
 
-    return res.status(200).json({ loginLink });
+      return res.status(200).json({ loginLink });
+    } catch (err) {
+      return handleError({
+        error: { from: "generateAuthUrl", err },
+        res,
+        callback: () => res.status(503).end(),
+      });
+    }
   },
   appLogout: async (req: Request, res: Response) => {
     try {

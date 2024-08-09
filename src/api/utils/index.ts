@@ -20,11 +20,11 @@ export const handleError = ({
   if (error.err instanceof ZodError) {
     return res.status(400).end();
   }
-  if ((error.err as GaxiosError)?.response?.status) {
-    return res.status((error.err as GaxiosError).response!.status || 500).end();
-  }
   if (error.err instanceof Error && callback) {
     return callback();
+  }
+  if ((error.err as GaxiosError)?.response?.status) {
+    return res.status((error.err as GaxiosError).response!.status || 500).end();
   }
   return res.status(500).end();
 };

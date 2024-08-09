@@ -38,11 +38,12 @@ export const AlbumController = Object.freeze({
   },
   getImagesFromSpecificAlbum: async (req: Request, res: Response) => {
     try {
-      const { albumId } = req.params;
       const { appUser, access_token } = req.locals;
 
-      const numAlbumId = Number(albumId);
-      const albumDetails = await selectAlbum(appUser.id, numAlbumId);
+      const albumDetails = await selectAlbum(
+        appUser.id,
+        Number(req.params.albumId),
+      );
       if (!albumDetails) {
         return res.status(404).end();
       }
