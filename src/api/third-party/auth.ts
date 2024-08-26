@@ -7,5 +7,5 @@ export const generateAccessToken = async (code: string) => {
     redirect_uri: CONFIG.oauth2Credentials.redirect_uris[0],
   });
 
-  return tokens.access_token;
+  return tokens;
 };

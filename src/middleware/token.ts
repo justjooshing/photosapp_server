@@ -11,12 +11,25 @@ export const checkJWT = async (
   next: NextFunction,
 ) => {
   try {
-    const token = getTokenFromHeader(req);
-    const verifiedToken = jwt.verify(token, CONFIG.JWTsecret, {
-      complete: false,
-    }) as string;
-
+    const verifiedToken = jwt.verify(
+      getTokenFromHeader(req, "authorization"),
+      CONFIG.JWTsecret,
+      {
+        complete: false,
+      },
+    ) as string;
     req.locals.access_token = verifiedToken;
+
+    const refresh_token = jwt.verify(
+      getTokenFromHeader(req, "rt"),
+      CONFIG.JWTsecret,
+      {
+        complete: false,
+      },
+    ) as string;
+
+    req.locals.refresh_token = refresh_token;
+
     next();
   } catch (err) {
     return handleError({
@@ -33,10 +46,10 @@ export const refreshAuthToken = async (
   next: NextFunction,
 ) => {
   try {
-    const { access_token } = req.locals;
-    if (access_token) {
+    const { access_token, refresh_token } = req.locals;
+    if (access_token && refresh_token) {
       const client = new google.auth.OAuth2(oauth2Config);
-      client.setCredentials({ access_token });
+      client.setCredentials({ access_token, refresh_token });
       const { expiry_date } = await client.getTokenInfo(access_token);
       // refresh if expiry date is in less than 30 minutes
       const thirty_minutes = 1000 * 60 * 30;
@@ -47,8 +60,18 @@ export const refreshAuthToken = async (
         if (credentials.access_token) {
           req.locals.access_token = credentials.access_token;
           const token = jwt.sign(access_token, CONFIG.JWTsecret);
-          res.header("Access-Control-Expose-Headers", "Jwt");
+          res.header("Access-Control-Expose-Headers", ["Jwt", "rt"]);
           res.setHeader("Jwt", token);
+
+          if (credentials.refresh_token) {
+            const refresh_token = jwt.sign(
+              credentials.refresh_token,
+              CONFIG.JWTsecret,
+            );
+
+            req.locals.refresh_token = credentials.refresh_token;
+            res.setHeader("rt", refresh_token);
+          }
         }
       }
     }

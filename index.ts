@@ -4,10 +4,8 @@ import { expressSetup } from "./src/loaders/express.js";
 
 const app = express();
 
-const { port } = CONFIG;
-
 expressSetup(app);
 
-app.listen(port, () => {
-  console.info(`Server is running on port ${port}`);
+app.listen(CONFIG.port, () => {
+  console.info(`Server is running on port ${CONFIG.port}`);
 });

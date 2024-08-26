@@ -49,7 +49,9 @@ export const AuthController = Object.freeze({
       return res.status(400).redirect(redirect_uri);
     }
     try {
-      const access_token = await generateAccessToken(req.query.code);
+      const { access_token, refresh_token } = await generateAccessToken(
+        req.query.code,
+      );
       if (!access_token) {
         throw new Error("No access token");
       }
@@ -61,6 +63,10 @@ export const AuthController = Object.freeze({
       const token = jwt.sign(access_token, CONFIG.JWTsecret);
       const uri = new URL(redirect_uri);
       uri.searchParams.append("jwt", token);
+      if (refresh_token) {
+        const refreshJwt = jwt.sign(refresh_token, CONFIG.JWTsecret);
+        uri.searchParams.append("rt", refreshJwt);
+      }
       return res.redirect(uri.toString());
     } catch (err) {
       handleError({
