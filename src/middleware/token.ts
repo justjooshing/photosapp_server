@@ -64,13 +64,13 @@ export const refreshAuthToken = async (
           res.setHeader("Jwt", token);
 
           if (credentials.refresh_token) {
-            const refresh_token = jwt.sign(
+            const new_refresh_token = jwt.sign(
               credentials.refresh_token,
               CONFIG.JWTsecret,
             );
 
             req.locals.refresh_token = credentials.refresh_token;
-            res.setHeader("rt", refresh_token);
+            res.setHeader("rt", new_refresh_token);
           }
         }
       }
