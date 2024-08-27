@@ -14,7 +14,7 @@ export const UserController = Object.freeze({
     return res.status(200).json({ user });
   },
   deleteUser: async (req: Request, res: Response) => {
-    const { id } = req.locals.appUser;
+    const { id, email } = req.locals.appUser;
     try {
       await prisma.images.deleteMany({
         where: {
@@ -36,6 +36,10 @@ export const UserController = Object.freeze({
         where: {
           id,
         },
+      });
+
+      await prisma.refresh_token.delete({
+        where: { email },
       });
 
       await oauth2Client.revokeToken(req.locals.access_token);
