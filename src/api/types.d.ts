@@ -13,7 +13,6 @@ declare module "express-serve-static-core" {
 
 interface MiddlewareProps {
   access_token: string;
-  refresh_token: string;
   appUser: SchemaUser;
   app_version: number;
 }

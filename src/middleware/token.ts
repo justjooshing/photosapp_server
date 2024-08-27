@@ -2,8 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { handleError } from "@/api/utils/index.js";
 import { google } from "googleapis";
-import { getTokenFromHeader } from "@/api/auth/services.js";
+import { getTokenFromHeader } from "@/api/auth/helpers.js";
 import { CONFIG, oauth2Config } from "../config/index.js";
+import { getRefreshToken } from "@/api/auth/services.js";
 
 export const checkJWT = async (
   req: Request,
@@ -19,17 +20,6 @@ export const checkJWT = async (
       },
     ) as string;
     req.locals.access_token = verifiedToken;
-
-    const refresh_token = jwt.verify(
-      getTokenFromHeader(req, "rt"),
-      CONFIG.JWTsecret,
-      {
-        complete: false,
-      },
-    ) as string;
-
-    req.locals.refresh_token = refresh_token;
-
     next();
   } catch (err) {
     return handleError({
@@ -46,32 +36,30 @@ export const refreshAuthToken = async (
   next: NextFunction,
 ) => {
   try {
-    const { access_token, refresh_token } = req.locals;
-    if (access_token && refresh_token) {
+    const { access_token } = req.locals;
+    if (access_token) {
       const client = new google.auth.OAuth2(oauth2Config);
-      client.setCredentials({ access_token, refresh_token });
-      const { expiry_date } = await client.getTokenInfo(access_token);
-      // refresh if expiry date is in less than 30 minutes
-      const thirty_minutes = 1000 * 60 * 30;
-      if (Date.now() > expiry_date - thirty_minutes) {
+
+      client.setCredentials({ access_token });
+      const { expiry_date, email } = await client.getTokenInfo(access_token);
+
+      // refresh if expiry date is in less than 10 minutes
+      const ten_minutes = 1000 * 60 * 50;
+      const needsRefreshing = Date.now() > expiry_date - ten_minutes;
+      if (email && needsRefreshing) {
         console.info("Access token expired, refreshing...");
+
+        // get refresh_token
+        const refresh_token = await getRefreshToken({ email });
+        client.setCredentials({ refresh_token });
+
         const { credentials } = await client.refreshAccessToken();
         client.setCredentials(credentials);
         if (credentials.access_token) {
           req.locals.access_token = credentials.access_token;
-          const token = jwt.sign(access_token, CONFIG.JWTsecret);
-          res.header("Access-Control-Expose-Headers", ["Jwt", "rt"]);
-          res.setHeader("Jwt", token);
-
-          if (credentials.refresh_token) {
-            const new_refresh_token = jwt.sign(
-              credentials.refresh_token,
-              CONFIG.JWTsecret,
-            );
-
-            req.locals.refresh_token = credentials.refresh_token;
-            res.setHeader("rt", new_refresh_token);
-          }
+          const new_token = jwt.sign(access_token, CONFIG.JWTsecret);
+          res.header("Access-Control-Expose-Headers", "jwt");
+          res.setHeader("jwt", new_token);
         }
       }
     }

@@ -9,6 +9,7 @@ import {
 import { getGoogleUser } from "@/api/third-party/user.js";
 import { generateAccessToken } from "@/api/third-party/auth.js";
 import { handleError } from "@/api/utils/index.js";
+import { updateRefeshToken } from "./services.js";
 
 const redirect_uri = CONFIG.redirect_uri;
 
@@ -57,16 +58,15 @@ export const AuthController = Object.freeze({
       }
       const user = await getGoogleUser(access_token);
       const appUser = await findOrCreateUser(user);
+      if (refresh_token) {
+        await updateRefeshToken({ email: appUser.email, refresh_token });
+      }
 
       await updateNewestImages(access_token, appUser);
       await updateImageSizes(access_token, appUser.id);
       const token = jwt.sign(access_token, CONFIG.JWTsecret);
       const uri = new URL(redirect_uri);
       uri.searchParams.append("jwt", token);
-      if (refresh_token) {
-        const refreshJwt = jwt.sign(refresh_token, CONFIG.JWTsecret);
-        uri.searchParams.append("rt", refreshJwt);
-      }
       return res.redirect(uri.toString());
     } catch (err) {
       handleError({
