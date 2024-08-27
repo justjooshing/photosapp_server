@@ -20,8 +20,11 @@ export const updateRefeshToken = async ({
   email,
   refresh_token,
 }: UpdateRefreshTokenProps) => {
-  const existing = await prisma.refresh_token.findUnique({ where: { email } });
-  if (existing) {
+  const existing = await prisma.refresh_token.findUnique({
+    where: { email },
+    select: { refresh_token: true },
+  });
+  if (existing?.refresh_token) {
     return await prisma.refresh_token.update({
       where: {
         email,
