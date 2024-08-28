@@ -1,41 +1,46 @@
 import ky from "ky";
-import { HandleGetImages } from "@/api/images/services/types.js";
-import { MediaItemSearch, MediaItemResultsImages, Images } from "./types.js";
+import {
+  HandleGetNewImages,
+  HandleGetSpecificImages,
+} from "@/api/images/services/types.js";
+import { MediaItemResultsImages, Images } from "./types.js";
 
 const endpoint = "https://photoslibrary.googleapis.com/v1/mediaItems";
 
-export const baseBodyParams = (options?: MediaItemSearch): MediaItemSearch => ({
-  pageSize: 100,
-  filters: {
-    mediaTypeFilter: {
-      mediaTypes: "PHOTO",
-    },
-    includeArchivedMedia: true,
-  },
-  ...options,
-});
-
-export const handleGetImages = async <
-  ImageResponseType = MediaItemResultsImages | Images,
->({
+export const handleGetSpecificImages = async ({
   access_token,
-  options,
-}: HandleGetImages): Promise<ImageResponseType> => {
-  const client = ky.create({
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-    },
-  });
-  const method = options.method === ":search" ? "post" : "get";
+  searchParams,
+}: HandleGetSpecificImages) =>
+  ky
+    .get(endpoint + ":batchGet", {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+      searchParams,
+    })
+    .json<MediaItemResultsImages>();
 
-  const res = await client[method](`${endpoint}${options.method}`, {
-    ...(options.method === ":search" && { json: options.bodyParams }),
-    ...(options.method === ":batchGet" && {
-      searchParams: options.searchParams,
-    }),
-  });
-  return await res.json<ImageResponseType>();
-};
+export const handleGetNewImages = async ({
+  access_token,
+  bodyParams,
+}: HandleGetNewImages) =>
+  ky
+    .post(endpoint + ":search", {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+      json: {
+        pageSize: 100,
+        filters: {
+          mediaTypeFilter: {
+            mediaTypes: "PHOTO",
+          },
+          includeArchivedMedia: true,
+        },
+        ...bodyParams,
+      },
+    })
+    .json<Images>();
 
 export const getImageSize = async (access_token: string, baseUrl: string) => {
   try {

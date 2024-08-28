@@ -12,17 +12,14 @@ export interface LoadImagesParams {
   bodyParams?: MediaItemSearch;
 }
 
-export interface HandleGetImages {
+export interface HandleGetSpecificImages {
   access_token: string;
-  options:
-    | {
-        method: ":search";
-        bodyParams: MediaItemSearch;
-      }
-    | {
-        method: ":batchGet";
-        searchParams: URLSearchParams;
-      };
+  searchParams: URLSearchParams;
+}
+
+export interface HandleGetNewImages {
+  access_token: string;
+  bodyParams: MediaItemSearch;
 }
 
 // ShapedImages sent in res

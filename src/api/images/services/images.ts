@@ -10,7 +10,6 @@ import { newestImagesFilter } from "@/api/third-party/filters.js";
 import { prisma } from "@/loaders/prisma.js";
 
 import {
-  MediaItemResultsImages,
   Images,
   MediaItemResultError,
   MediaItemResultSuccess,
@@ -24,9 +23,9 @@ import {
 import { updateUserLastUpdate } from "@/api/user/services/user.js";
 import pLimit from "p-limit";
 import {
-  handleGetImages,
-  baseBodyParams,
   getImageSize,
+  handleGetNewImages,
+  handleGetSpecificImages,
 } from "@/api/third-party/images.js";
 import { SortOptions } from "@/api/images/types.js";
 
@@ -37,15 +36,12 @@ export const loadImageSet = async ({
   const images: Images["mediaItems"] = [];
   try {
     const fetchAllImages = async (pageToken?: string) => {
-      const data = await handleGetImages<Images>({
+      const data = await handleGetNewImages({
         access_token,
-        options: {
-          method: ":search",
-          bodyParams: baseBodyParams({
-            ...bodyParams,
-            ...(pageToken && {
-              pageToken,
-            }),
+        bodyParams: {
+          ...bodyParams,
+          ...(pageToken && {
+            pageToken,
           }),
         },
       });
@@ -348,12 +344,9 @@ export const addFreshBaseUrls = async (
       for (const image of chunk) {
         mediaItemIds.append("mediaItemIds", image.googleId);
       }
-      const data = await handleGetImages<MediaItemResultsImages>({
+      const data = await handleGetSpecificImages({
         access_token,
-        options: {
-          method: ":batchGet",
-          searchParams: mediaItemIds,
-        },
+        searchParams: mediaItemIds,
       });
 
       data.mediaItemResults.forEach((item) => {
