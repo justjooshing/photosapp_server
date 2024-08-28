@@ -20,7 +20,6 @@ import {
   excludeMimeType,
   prismaRawSql,
 } from "@/api/utils/index.js";
-import { updateUserLastUpdate } from "@/api/user/services/user.js";
 import pLimit from "p-limit";
 import {
   getImageSize,
@@ -29,37 +28,30 @@ import {
 } from "@/api/third-party/images.js";
 import { SortOptions } from "@/api/images/types.js";
 
-export const loadImageSet = async ({
+export const fetchAllImages = async ({
   access_token,
+  userId,
   bodyParams,
 }: LoadImagesParams) => {
-  const images: Images["mediaItems"] = [];
   try {
-    const fetchAllImages = async (pageToken?: string) => {
-      const data = await handleGetNewImages({
-        access_token,
-        bodyParams: {
-          ...bodyParams,
-          ...(pageToken && {
-            pageToken,
-          }),
-        },
-      });
+    const { mediaItems, nextPageToken } = await handleGetNewImages({
+      access_token,
+      bodyParams,
+    });
 
-      if (data.mediaItems) {
-        images.push(...data.mediaItems);
-      }
-      const countLabel = "fetching next page";
-      if (data.nextPageToken) {
-        console.count(countLabel);
-        await fetchAllImages(data.nextPageToken);
-      } else {
-        console.info("no more pages");
-        return;
-      }
-    };
-    await fetchAllImages();
-    return images;
+    await updateImagesDB(userId, mediaItems);
+    await updateImageSizes(access_token, userId);
+
+    if (nextPageToken) {
+      console.count("fetching next page");
+      await fetchAllImages({
+        access_token,
+        userId,
+        bodyParams: { ...bodyParams, pageToken: nextPageToken },
+      });
+    } else {
+      console.info("No more pages");
+    }
   } catch (err) {
     console.error("FETCH ALL", err);
     throw err;
@@ -73,9 +65,9 @@ const identifyNewImagesSets = async (userId: number, data: QueryImageSets) => {
     select: { unsorted_image_ids: true },
   });
 
-  const existingImageIds = existingImageSets
-    .map(({ unsorted_image_ids }) => unsorted_image_ids)
-    .flat();
+  const existingImageIds = existingImageSets.flatMap(
+    ({ unsorted_image_ids }) => unsorted_image_ids,
+  );
 
   // Add as newImageSet if none of the current (new) group's unsorted_image_ids exist in existing image_ids
   const newImageSets = data.filter(
@@ -85,8 +77,9 @@ const identifyNewImagesSets = async (userId: number, data: QueryImageSets) => {
 
   return newImageSets;
 };
-const sortSimilarImages = async (userId: number) => {
-  console.info("getting similar image sets");
+
+export const sortSimilarImages = async (userId: number) => {
+  console.info("Started: Sorting images into sets");
 
   const data = await prismaRawSql<QueryImageSets>(group_similar(userId));
 
@@ -104,7 +97,6 @@ const sortSimilarImages = async (userId: number) => {
         },
       },
     });
-    console.info("updating images with respective image set ids");
     for (const image_set of newlyCreatedImageSets) {
       await prisma.images.updateMany({
         where: {
@@ -116,48 +108,38 @@ const sortSimilarImages = async (userId: number) => {
         data: { image_set_id: image_set.id },
       });
     }
-    console.info("updated images with respective image set ids");
   }
-  console.info("updated new image sets");
+  console.info("Finished: Sorting images into sets");
 };
 
 export const updateNewestImages = async (
   access_token: string,
   appUser: SchemaUser,
 ) => {
-  const currentDate = new Date();
+  const { id, images_last_updated_at } = appUser;
 
-  const { id: appUserId, images_last_updated_at } = appUser;
+  const needsUpdating =
+    images_last_updated_at && images_last_updated_at < new Date();
 
-  const bodyParams = (() => {
-    if (!images_last_updated_at) {
-      // Grab all images
-      return {};
-    } else if (
-      // Grab newest images each day
-      new Date(images_last_updated_at.toDateString()) <
-      new Date(currentDate.toDateString())
-    ) {
-      const lastUpdated = new Date(images_last_updated_at);
-      return {
-        filters: newestImagesFilter(lastUpdated),
-      };
-    }
-    return undefined;
-  })();
+  if (!needsUpdating) return;
 
-  if (bodyParams) {
-    try {
-      const newImages = await loadImageSet({ access_token, bodyParams });
-      await updateImagesDB(appUserId, newImages);
-      await sortSimilarImages(appUser.id);
-      console.info(
-        `${bodyParams.filters ? "new" : "initial"} images fetched and sorted`,
-      );
-    } catch (err) {
-      console.error(`${bodyParams.filters ? "new" : "initial"} load`, err);
-      throw err;
-    }
+  const bodyParams = images_last_updated_at
+    ? {
+        filters: newestImagesFilter(images_last_updated_at),
+      }
+    : {};
+
+  try {
+    await fetchAllImages({
+      access_token,
+      userId: id,
+      bodyParams,
+    });
+
+    console.info(`${bodyParams.filters ? "new" : "initial"} images fetched`);
+  } catch (err) {
+    console.error(`${bodyParams.filters ? "new" : "initial"} load`, err);
+    throw err;
   }
 };
 
@@ -211,7 +193,6 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
       });
       console.info("db updated");
     }
-    await updateUserLastUpdate(userId);
   } catch (err) {
     console.error("DB update error", err);
     updateImagesDB(userId, images); //restart?
@@ -274,6 +255,7 @@ export const concurrentlyGetImagesSizes = async (
           return getImageSize(access_token, baseUrl);
         });
       }
+      console.countReset(countLabel);
     });
 
     const results = await Promise.all(promises);

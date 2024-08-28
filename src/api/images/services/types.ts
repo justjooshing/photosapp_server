@@ -9,7 +9,8 @@ export { SchemaImages, SchemaAlbum, SchemaUser, SchemaImagesSets };
 
 export interface LoadImagesParams {
   access_token: string;
-  bodyParams?: MediaItemSearch;
+  userId: number;
+  bodyParams: MediaItemSearch;
 }
 
 export interface HandleGetSpecificImages {

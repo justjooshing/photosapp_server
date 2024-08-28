@@ -16,7 +16,7 @@ export interface Photo extends CameraDetails {
   exposureTime: string; //time ending in s
 }
 
-interface MediaItems<T> {
+interface MediaItems<T extends Photo | Video> {
   id: string;
   productUrl: string;
   baseUrl: string;
@@ -35,10 +35,15 @@ interface MediaItems<T> {
   };
 }
 
-export type Images = { mediaItems: MediaItems<Photo>[]; nextPageToken: string };
-export type Videos = { mediaItems: MediaItems<Video>[]; nextPageToken: string };
+interface MediaItemWrapper<T extends Photo | Video> {
+  mediaItems: MediaItems<T>[];
+  nextPageToken?: string;
+}
 
-export interface MediaItem<T> extends MediaItems<T> {
+export type Images = MediaItemWrapper<Photo>;
+export type Videos = MediaItemWrapper<Video>;
+
+export interface MediaItem<T extends Photo | Video> extends MediaItems<T> {
   contributorInfo: {
     profilePictureBaseUrl: string;
     displayName: string;

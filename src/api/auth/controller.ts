@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
 import { CONFIG, oauth2Client } from "@/config/index.js";
 import jwt from "jsonwebtoken";
-import { findOrCreateUser } from "@/api/user/services/user.js";
 import {
-  updateImageSizes,
+  findOrCreateUser,
+  updateUserLastUpdate,
+} from "@/api/user/services/user.js";
+import {
+  sortSimilarImages,
   updateNewestImages,
 } from "@/api/images/services/images.js";
 import { getGoogleUser } from "@/api/third-party/user.js";
@@ -63,7 +66,11 @@ export const AuthController = Object.freeze({
       }
 
       await updateNewestImages(access_token, appUser);
-      await updateImageSizes(access_token, appUser.id);
+      // Can only sort after getting all images
+      await sortSimilarImages(appUser.id);
+      await updateUserLastUpdate(appUser.id);
+
+      // Return earlier, and then have SSE when complete?
       const token = jwt.sign(access_token, CONFIG.JWTsecret);
       const uri = new URL(redirect_uri);
       uri.searchParams.append("jwt", token);
