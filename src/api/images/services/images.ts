@@ -217,7 +217,7 @@ export const updateImageSizes = async (
 
   const countLabel = `Updating image size ${imageSizes.length}`;
   const updatePromises = imageSizes.map((image) => {
-    if (image.baseUrl && image.size) {
+    if (image?.baseUrl && image?.size) {
       console.count(countLabel);
       return prisma.$executeRaw`
           UPDATE "Images"
