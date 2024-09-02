@@ -5,10 +5,7 @@ import {
   findOrCreateUser,
   updateUserLastUpdate,
 } from "@/api/user/services/user.js";
-import {
-  sortSimilarImages,
-  updateNewestImages,
-} from "@/api/images/services/images.js";
+import { updateNewestImages } from "@/api/images/services/images.js";
 import { getGoogleUser } from "@/api/third-party/user.js";
 import { generateAccessToken } from "@/api/third-party/auth.js";
 import { handleError } from "@/api/utils/index.js";
@@ -65,16 +62,17 @@ export const AuthController = Object.freeze({
         await updateRefeshToken({ email: appUser.email, refresh_token });
       }
 
-      await updateNewestImages(access_token, appUser);
-      // Can only sort after getting all images
-      await sortSimilarImages(appUser.id);
-      await updateUserLastUpdate(appUser.id);
+      // kickoff fetching new/initial images
+      // but return user who will see images sets as they're added
+      updateNewestImages(access_token, appUser);
 
-      // Return earlier, and then have SSE when complete?
       const token = jwt.sign(access_token, CONFIG.JWTsecret);
       const uri = new URL(redirect_uri);
       uri.searchParams.append("jwt", token);
-      return res.redirect(uri.toString());
+      res.redirect(uri.toString());
+
+      // Only update after new images are fully processed in case of errors
+      return updateUserLastUpdate(appUser.id);
     } catch (err) {
       handleError({
         error: { from: "Auth", err },

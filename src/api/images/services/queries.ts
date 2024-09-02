@@ -83,6 +83,7 @@ export const queryByImageType = async (type: ImageType, userId: number) =>
 export const group_similar = (userId: number) =>
   Prisma.sql`SELECT date_trunc('minute', created_at) AS minute, array_agg(id) AS unsorted_image_ids FROM "Images" 
   WHERE "userId" = ${userId}
+    AND image_set_id is NULL
     AND updated_at IS NULL
     AND actually_deleted IS NULL
     AND mime_type != 'video/mp4'

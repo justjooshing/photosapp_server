@@ -8,7 +8,6 @@ import {
 } from "./types.js";
 import { newestImagesFilter } from "@/api/third-party/filters.js";
 import { prisma } from "@/loaders/prisma.js";
-
 import {
   Images,
   MediaItemResultError,
@@ -38,18 +37,19 @@ export const fetchAllImages = async ({
       access_token,
       bodyParams,
     });
-
     await updateImagesDB(userId, mediaItems);
+    await sortSimilarImages(userId);
     await updateImageSizes(access_token, userId);
-
+    const countLabel = "fetching next page";
     if (nextPageToken) {
-      console.count("fetching next page");
+      console.count(countLabel);
       await fetchAllImages({
         access_token,
         userId,
         bodyParams: { ...bodyParams, pageToken: nextPageToken },
       });
     } else {
+      console.countReset(countLabel);
       console.info("No more pages");
     }
   } catch (err) {
@@ -58,38 +58,26 @@ export const fetchAllImages = async ({
   }
 };
 
-type QueryImageSets = Pick<SchemaImagesSets, "unsorted_image_ids" | "minute">[];
-const identifyNewImagesSets = async (userId: number, data: QueryImageSets) => {
-  const existingImageSets = await prisma.image_sets.findMany({
-    where: { userId },
-    select: { unsorted_image_ids: true },
-  });
-
-  const existingImageIds = existingImageSets.flatMap(
-    ({ unsorted_image_ids }) => unsorted_image_ids,
-  );
-
-  // Add as newImageSet if none of the current (new) group's unsorted_image_ids exist in existing image_ids
-  const newImageSets = data.filter(
-    ({ unsorted_image_ids }) =>
-      !unsorted_image_ids.some((id) => existingImageIds.includes(id)),
-  );
-
-  return newImageSets;
-};
-
 export const sortSimilarImages = async (userId: number) => {
   console.info("Started: Sorting images into sets");
 
-  const data = await prismaRawSql<QueryImageSets>(group_similar(userId));
+  // Images that aren't in image sets
+  const data = await prismaRawSql<
+    Pick<SchemaImagesSets, "unsorted_image_ids" | "minute">[]
+  >(group_similar(userId));
 
-  const newImageSets = await identifyNewImagesSets(userId, data);
+  if (!data.length) return;
 
-  if (newImageSets.length) {
-    await prisma.image_sets.createMany({
-      data: newImageSets.map((group) => ({ ...group, userId })),
+  // $transaction allows for atomicity
+  await prisma.$transaction(async (tx) => {
+    await tx.image_sets.createMany({
+      data: data.map((group) => ({
+        ...group,
+        userId,
+      })),
     });
-    const newlyCreatedImageSets = await prisma.image_sets.findMany({
+
+    const newlyCreatedImageSets = await tx.image_sets.findMany({
       where: {
         userId,
         minute: {
@@ -97,8 +85,9 @@ export const sortSimilarImages = async (userId: number) => {
         },
       },
     });
-    for (const image_set of newlyCreatedImageSets) {
-      await prisma.images.updateMany({
+
+    const updatePromises = newlyCreatedImageSets.map((image_set) =>
+      tx.images.updateMany({
         where: {
           userId,
           id: {
@@ -106,10 +95,12 @@ export const sortSimilarImages = async (userId: number) => {
           },
         },
         data: { image_set_id: image_set.id },
-      });
-    }
-  }
-  console.info("Finished: Sorting images into sets");
+      }),
+    );
+
+    await Promise.all(updatePromises);
+    console.info("Finished: Sorting images into sets");
+  });
 };
 
 export const updateNewestImages = async (
@@ -117,11 +108,12 @@ export const updateNewestImages = async (
   appUser: SchemaUser,
 ) => {
   const { id, images_last_updated_at } = appUser;
-
-  const needsUpdating =
-    images_last_updated_at && images_last_updated_at < new Date();
-
-  if (!needsUpdating) return;
+  // If last update is today
+  if (
+    images_last_updated_at &&
+    images_last_updated_at.toDateString() >= new Date().toDateString()
+  )
+    return;
 
   const bodyParams = images_last_updated_at
     ? {
@@ -211,34 +203,33 @@ export const updateImageSizes = async (
     },
   });
 
-  // refresh baseURLs to be sure we can request them
-  if (images.length) {
-    const withBaseURLs = await checkValidBaseUrl(access_token, images);
-    console.info("updated all base urls for images missing sizes");
-    const imageSizes = await concurrentlyGetImagesSizes(
-      access_token,
-      withBaseURLs,
-    );
+  if (!images.length) return;
 
-    if (imageSizes?.length) {
-      const countLabel = `Updating image size ${imageSizes.length}`;
-      for (const image of imageSizes) {
-        if (image?.baseUrl && image.size) {
-          //Need to make these more performant - raw sql/prisma.$transactions?
-          console.count(countLabel);
-          await prisma.images.update({
-            where: {
-              baseUrl: image.baseUrl,
-            },
-            data: {
-              size: image.size,
-            },
-          });
-        }
-      }
+  // refresh baseURLs to be sure we can request them
+  const withBaseURLs = await checkValidBaseUrl(access_token, images);
+  console.info("updated all base urls for images missing sizes");
+  const imageSizes = await concurrentlyGetImagesSizes(
+    access_token,
+    withBaseURLs,
+  );
+
+  if (!imageSizes?.length) return;
+
+  const countLabel = `Updating image size ${imageSizes.length}`;
+  const updatePromises = imageSizes.map((image) => {
+    if (image.baseUrl && image.size) {
+      console.count(countLabel);
+      return prisma.$executeRaw`
+          UPDATE "Images"
+          SET "size" = ${image.size}
+          WHERE "baseUrl" = ${image.baseUrl}
+        `;
     }
-    console.info("last image updated size");
-  }
+    return Promise.resolve();
+  });
+  console.countReset(countLabel);
+  await Promise.all(updatePromises);
+  console.info("last image size updated");
 };
 
 export const concurrentlyGetImagesSizes = async (
@@ -248,17 +239,23 @@ export const concurrentlyGetImagesSizes = async (
   try {
     const limit = pLimit(50);
     const countLabel = `concurrent requests of ${images.length}`;
-    const promises = images.map(({ baseUrl }) => {
-      if (baseUrl) {
-        return limit(() => {
-          console.count(countLabel);
-          return getImageSize(access_token, baseUrl);
-        });
-      }
-      console.countReset(countLabel);
-    });
+    const promises = images.reduce(
+      (
+        acc: Promise<{ baseUrl: string; size: number } | undefined>[],
+        { baseUrl },
+      ) => {
+        console.count(countLabel);
+        if (baseUrl) {
+          acc.push(limit(() => getImageSize(access_token, baseUrl)));
+        }
+        return acc;
+      },
+      [],
+    );
 
     const results = await Promise.all(promises);
+    console.countReset(countLabel);
+
     return results.filter((res) => !!res);
   } catch (err) {
     console.error("err", err);
@@ -339,6 +336,7 @@ export const addFreshBaseUrls = async (
         }
       });
     }
+
     console.info(
       "finished requesting all base URLs",
       dataset.length,
