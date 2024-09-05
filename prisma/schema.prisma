@@ -31,7 +31,7 @@ model images {
   id                   Int         @id @default(autoincrement())
   googleId             String      @unique
   mime_type            String?
-  user                 user        @relation(fields: [userId], references: [id])
+  user                 user        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId               Int
   baseUrl              String?     @unique
   baseUrl_last_updated DateTime?   @db.Timestamptz(3)
@@ -55,7 +55,7 @@ model images {
 model image_sets {
   id                 Int      @id @default(autoincrement())
   minute             DateTime
-  user               user     @relation(fields: [userId], references: [id])
+  user               user     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId             Int
   unsorted_image_ids Int[]
   sorted_image_ids   Int[]
@@ -67,7 +67,7 @@ model image_sets {
 
 model album {
   id         Int       @id @default(autoincrement())
-  user       user      @relation(fields: [userId], references: [id])
+  user       user      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
   created_at DateTime? @default(now()) @db.Timestamptz(3)
   title      String
