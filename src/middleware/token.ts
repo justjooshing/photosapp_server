@@ -41,7 +41,13 @@ export const refreshAuthToken = async (
       const client = new google.auth.OAuth2(oauth2Config);
 
       client.setCredentials({ access_token });
-      const { expiry_date, email } = await client.getTokenInfo(access_token);
+      const { expiry_date, email, aud } = await client.getTokenInfo(
+        access_token,
+      );
+
+      if (aud !== CONFIG.oauth2Credentials.client_id) {
+        throw new Error("OAuth2 client/aud mismatch");
+      }
 
       // refresh if expiry date is in less than 10 minutes
       const ten_minutes = 1000 * 60 * 50;
