@@ -128,6 +128,10 @@ export const updateNewestImages = async (
       bodyParams,
     });
 
+    // Sweep to try and update any image sizes that we don't have
+    console.log("re-grab missing image sizes");
+    await updateImageSizes(access_token, id);
+
     console.info(`${bodyParams.filters ? "new" : "initial"} images fetched`);
   } catch (err) {
     console.error(`${bodyParams.filters ? "new" : "initial"} load`, err);
@@ -200,6 +204,7 @@ export const updateImageSizes = async (
       userId,
       size: null,
       actually_deleted: null,
+      ...excludeMimeType,
     },
   });
 
