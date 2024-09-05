@@ -16,33 +16,19 @@ export const UserController = Object.freeze({
   deleteUser: async (req: Request, res: Response) => {
     const { id, email } = req.locals.appUser;
     try {
-      await prisma.images.deleteMany({
-        where: {
-          userId: id,
-        },
+      await prisma.$transaction(async (tx) => {
+        // will cascade delete relational images, image_sets and albums
+        await tx.user.delete({
+          where: {
+            id,
+          },
+        });
+        await tx.refresh_token.delete({
+          where: { email },
+        });
       });
-
-      await prisma.image_sets.deleteMany({
-        where: {
-          userId: id,
-        },
-      });
-
-      await prisma.album.deleteMany({
-        where: { userId: id },
-      });
-
-      await prisma.user.delete({
-        where: {
-          id,
-        },
-      });
-
-      await prisma.refresh_token.delete({
-        where: { email },
-      });
-
       await oauth2Client.revokeToken(req.locals.access_token);
+      console.info("user delete, token revoked");
       return res.status(201).end();
     } catch (err) {
       return handleError({
