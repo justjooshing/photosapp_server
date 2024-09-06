@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
 import { handleError } from "@/api/utils/index.js";
 import { google } from "googleapis";
-import { getTokenFromHeader } from "@/api/auth/helpers.js";
+import { getTokenFromHeader, jwtHandler } from "@/api/auth/helpers.js";
 import { CONFIG, oauth2Config } from "../config/index.js";
 import { getRefreshToken } from "@/api/auth/services.js";
 
@@ -12,14 +11,10 @@ export const checkJWT = async (
   next: NextFunction,
 ) => {
   try {
-    const verifiedToken = jwt.verify(
+    const { access_token } = jwtHandler.verify(
       getTokenFromHeader(req, "authorization"),
-      CONFIG.JWTsecret,
-      {
-        complete: false,
-      },
-    ) as string;
-    req.locals.access_token = verifiedToken;
+    );
+    req.locals.access_token = access_token;
     next();
   } catch (err) {
     return handleError({
@@ -63,7 +58,7 @@ export const refreshAuthToken = async (
         client.setCredentials(credentials);
         if (credentials.access_token) {
           req.locals.access_token = credentials.access_token;
-          const new_token = jwt.sign(access_token, CONFIG.JWTsecret);
+          const new_token = jwtHandler.sign({ access_token });
           res.header("Access-Control-Expose-Headers", "jwt");
           res.setHeader("jwt", new_token);
         }
