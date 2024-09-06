@@ -10,8 +10,8 @@ export const getUserData = async (
 ) => {
   const { access_token } = req.locals;
   try {
-    const googleUser = await getGoogleUser(access_token);
-    const appUser = await findUser(googleUser);
+    const { email } = await getGoogleUser(access_token);
+    const appUser = await findUser(email);
     if (!appUser) {
       return res.status(404).end();
     }

@@ -14,18 +14,18 @@ const createNewUser = async ({ email, id, picture }: UserData) => {
   return newUser;
 };
 
-export const findUser = async (user: UserData): Promise<SchemaUser | null> => {
-  const existingUser = await prisma.user.findUnique({
+export const findUser = async (
+  email: UserData["email"],
+): Promise<SchemaUser | null> =>
+  prisma.user.findUnique({
     where: {
-      email: user.email,
+      email,
     },
   });
-  return existingUser;
-};
 
 export const findOrCreateUser = async (user: UserData): Promise<SchemaUser> => {
   let appUser;
-  appUser = await findUser(user);
+  appUser = await findUser(user.email);
   if (!appUser) {
     appUser = await createNewUser(user);
   }
