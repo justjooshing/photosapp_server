@@ -1,11 +1,15 @@
 import express from "express";
-import { CONFIG } from "./src/config/index.js";
-import { expressSetup } from "./src/loaders/express.js";
+import http from "http";
+import { CONFIG } from "@/config/index.js";
+import { expressSetup } from "@/loaders/express.js";
+import { initializeSocket } from "@/loaders/socket.js";
 
 const app = express();
+const server = http.createServer(app);
 
 expressSetup(app);
+initializeSocket(server);
 
-app.listen(CONFIG.port, () => {
+server.listen(CONFIG.port, () => {
   console.info(`Server is running on port ${CONFIG.port}`);
 });

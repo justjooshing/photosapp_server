@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { CONFIG, oauth2Client } from "@/config/index.js";
-import jwt from "jsonwebtoken";
 import {
   findOrCreateUser,
   updateUserLastUpdate,
@@ -10,6 +9,8 @@ import { getGoogleUser } from "@/api/third-party/user.js";
 import { generateAccessToken } from "@/api/third-party/auth.js";
 import { handleError } from "@/api/utils/index.js";
 import { updateRefeshToken } from "./services.js";
+import { getSocketInstance } from "@/loaders/socket.js";
+import { jwtHandler } from "./helpers.js";
 
 const redirect_uri = CONFIG.redirect_uri;
 
@@ -33,6 +34,10 @@ export const AuthController = Object.freeze({
   appLogout: async (req: Request, res: Response) => {
     try {
       await oauth2Client.revokeToken(req.locals.access_token);
+
+      // force close existing sockets related to current user
+      const io = getSocketInstance();
+      io.in(req.locals.appUser.id.toString()).disconnectSockets();
       return res.status(204).end();
     } catch (err) {
       handleError({
@@ -57,16 +62,16 @@ export const AuthController = Object.freeze({
         throw new Error("No access token");
       }
       const user = await getGoogleUser(access_token);
+
       const appUser = await findOrCreateUser(user);
       if (refresh_token) {
         await updateRefeshToken({ email: appUser.email, refresh_token });
       }
-
       // kickoff fetching new/initial images
       // but return user who will see images sets as they're added
       updateNewestImages(access_token, appUser);
 
-      const token = jwt.sign(access_token, CONFIG.JWTsecret);
+      const token = jwtHandler.sign({ access_token });
       const uri = new URL(redirect_uri);
       uri.searchParams.append("jwt", token);
       res.redirect(uri.toString());

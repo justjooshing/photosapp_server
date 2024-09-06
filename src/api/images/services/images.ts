@@ -26,6 +26,7 @@ import {
   handleGetSpecificImages,
 } from "@/api/third-party/images.js";
 import { SortOptions } from "@/api/images/types.js";
+import { getSocketInstance } from "@/loaders/socket.js";
 
 export const fetchAllImages = async ({
   access_token,
@@ -49,6 +50,9 @@ export const fetchAllImages = async ({
         bodyParams: { ...bodyParams, pageToken: nextPageToken },
       });
     } else {
+      // Close existing sockets since we've finished updating
+      const io = getSocketInstance();
+      io.in(userId.toString()).disconnectSockets();
       console.countReset(countLabel);
       console.info("No more pages");
     }
@@ -129,7 +133,6 @@ export const updateNewestImages = async (
     });
 
     // Sweep to try and update any image sizes that we don't have
-    console.log("re-grab missing image sizes");
     await updateImageSizes(access_token, id);
 
     console.info(`${bodyParams.filters ? "new" : "initial"} images fetched`);
@@ -199,6 +202,7 @@ export const updateImageSizes = async (
   access_token: string,
   userId: number,
 ) => {
+  const io = getSocketInstance();
   const images = await prisma.images.findMany({
     where: {
       userId,
@@ -234,6 +238,9 @@ export const updateImageSizes = async (
   });
   console.countReset(countLabel);
   await Promise.all(updatePromises);
+
+  // Tell the FE to refetch image sizes
+  io.in(userId.toString()).emit("db_updated", { message: "sizes_updated" });
   console.info("last image size updated");
 };
 
