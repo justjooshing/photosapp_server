@@ -34,6 +34,7 @@ export const refreshAuthToken = async (
     const { access_token } = req.locals;
     if (access_token) {
       const client = new google.auth.OAuth2(oauth2Config);
+      res.set("Cache-Control", "private, must-revalidate, no-cache");
 
       client.setCredentials({ access_token });
       const { expiry_date, email, aud } = await client.getTokenInfo(
@@ -45,8 +46,8 @@ export const refreshAuthToken = async (
       }
 
       // refresh if expiry date is in less than 10 minutes
-      const ten_minutes = 1000 * 60 * 50;
-      const needsRefreshing = Date.now() > expiry_date - ten_minutes;
+      const three_minutes = 1000 * 60 * 57;
+      const needsRefreshing = Date.now() > expiry_date - three_minutes;
       if (email && needsRefreshing) {
         console.info("Access token expired, refreshing...");
 
@@ -58,7 +59,9 @@ export const refreshAuthToken = async (
         client.setCredentials(credentials);
         if (credentials.access_token) {
           req.locals.access_token = credentials.access_token;
-          const new_token = jwtHandler.sign({ access_token });
+          const new_token = jwtHandler.sign({
+            access_token: credentials.access_token,
+          });
           res.header("Access-Control-Expose-Headers", "jwt");
           res.setHeader("jwt", new_token);
         }
