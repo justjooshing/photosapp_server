@@ -22,7 +22,10 @@ export const initializeSocket = (server: HttpServer): SocketIOServer => {
 
   io.use(async (socket, next) => {
     try {
-      const { access_token } = jwtHandler.verify(socket.handshake.auth.jwt);
+      const token = socket.handshake.auth.jwt;
+      if (!token) throw new Error("No auth token");
+
+      const { access_token } = jwtHandler.verify(token);
 
       const { email } = await getGoogleUser(access_token);
       const appUser = await findUser(email);
