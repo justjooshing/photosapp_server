@@ -39,11 +39,10 @@ export const initializeSocket = (server: HttpServer): SocketIOServer => {
   });
 
   io.on("connection", (socket: Socket) => {
-    console.info("connected, adding socketId");
     socket.join(socket.data.user.id.toString());
 
     socket.on("disconnect", () => {
-      console.info("disconnected, removing socketId");
+      socket.leave(socket.data.user.id.toString());
     });
   });
 
