@@ -19,20 +19,16 @@ interface UpdateRefreshTokenProps extends RefreshTokenProps {
 export const updateRefeshToken = async ({
   email,
   refresh_token,
-}: UpdateRefreshTokenProps) => {
-  const existing = await prisma.refresh_token.findUnique({
-    where: { email },
-    select: { refresh_token: true },
+}: UpdateRefreshTokenProps) =>
+  prisma.refresh_token.upsert({
+    where: {
+      email,
+    },
+    create: {
+      email,
+      refresh_token,
+    },
+    update: {
+      refresh_token,
+    },
   });
-  if (existing?.refresh_token) {
-    return await prisma.refresh_token.update({
-      where: {
-        email,
-      },
-      data: { refresh_token },
-    });
-  }
-  return await prisma.refresh_token.create({
-    data: { email, refresh_token },
-  });
-};
