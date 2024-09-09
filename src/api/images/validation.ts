@@ -18,5 +18,4 @@ export const zImage = z.object({
   sorted_status: z
     .nativeEnum(SortOptions, { invalid_type_error: "Invalid sorted status" })
     .optional(),
-  baseUrl: z.string().nullable().optional(),
 });

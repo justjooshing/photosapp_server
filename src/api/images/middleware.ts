@@ -18,6 +18,22 @@ export const validateImageType = (
   }
 };
 
+export const validateGetSingleImage = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    zImageId.parse({ id: req.params.imageId });
+    next();
+  } catch (err) {
+    return handleError({
+      error: { from: "Check single image validation", err },
+      res,
+    });
+  }
+};
+
 export const validateUpdateSingleImage = (
   req: Request,
   res: Response,
