@@ -32,9 +32,9 @@ export const findOrCreateUser = async (user: UserData): Promise<SchemaUser> => {
   return appUser;
 };
 
-export const updateUserLastUpdate = async (userId: number) => {
+export const updateUserLastUpdate = async (userId: number) =>
   // Update last updated
-  await prisma.user.update({
+  prisma.user.update({
     where: {
       id: userId,
     },
@@ -42,4 +42,3 @@ export const updateUserLastUpdate = async (userId: number) => {
       images_last_updated_at: new Date(),
     },
   });
-};

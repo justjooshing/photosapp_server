@@ -1,5 +1,5 @@
-import { handleError } from "@/api/utils/index.js";
 import { NextFunction, Request, Response } from "express";
+import createHttpError from "http-errors";
 
 export const checkAppVersion = (
   req: Request,
@@ -9,15 +9,11 @@ export const checkAppVersion = (
   try {
     const version = req.header("app-version");
     if (version !== "web" && (!version || !Number(version))) {
-      throw new Error("Invalid app version");
+      throw createHttpError(400, "Invalid app version");
     }
     req.locals.app_version = Number(version);
     next();
   } catch (err) {
-    return handleError({
-      error: { from: "checkAppVersion", err },
-      res,
-      callback: () => res.status(400).end(),
-    });
+    next(err);
   }
 };

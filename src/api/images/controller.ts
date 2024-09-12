@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import {
   checkValidBaseUrl,
   findImage,
@@ -6,17 +6,18 @@ import {
   sortImageSet,
   updateImagesByChoice,
 } from "@/api/images/services/images.js";
-import { handleError } from "@/api/utils/index.js";
 import { getOrCreateCurrentAlbum } from "@/api/albums/services/albums.js";
 import { ApiImages } from "@/api/images/services/types.js";
 import { prisma } from "@/loaders/prisma.js";
 import { queryByImageType } from "@/api/images/services/queries.js";
 import { ImageType } from "@/api/images/types.js";
+import createHttpError from "http-errors";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (
     req: Request & { query: { type: ImageType } },
     res: Response,
+    next: NextFunction,
   ) => {
     try {
       const {
@@ -29,10 +30,7 @@ export const ImagesController = Object.freeze({
 
       return res.status(200).json(withUrls);
     } catch (err) {
-      handleError({
-        error: { from: "Getting images", err },
-        res,
-      });
+      next(err);
     }
   },
   handleUpdateSingleImage: async (
@@ -41,6 +39,7 @@ export const ImagesController = Object.freeze({
       params: { imageId: string };
     },
     res: Response,
+    next: NextFunction,
   ) => {
     const {
       locals: { appUser, access_token },
@@ -50,7 +49,7 @@ export const ImagesController = Object.freeze({
     try {
       const currentImage = await findImage(appUser.id, Number(imageId));
       if (!currentImage) {
-        return res.status(404).end();
+        throw createHttpError(404, "No image found to update");
       }
 
       const currentAlbum = await getOrCreateCurrentAlbum(
@@ -71,15 +70,13 @@ export const ImagesController = Object.freeze({
 
       return res.status(200).json({ image: freshUrlImage });
     } catch (err) {
-      handleError({
-        error: { from: "Updating image", err },
-        res,
-      });
+      next(err);
     }
   },
   checkGoogleImageStatus: async (
     req: Request & { params: { imageId: string } },
     res: Response,
+    next: NextFunction,
   ) => {
     const {
       locals: { appUser, access_token },
@@ -89,7 +86,7 @@ export const ImagesController = Object.freeze({
     try {
       const currentImage = await findImage(appUser.id, Number(imageId));
       if (!currentImage) {
-        return res.status(404).end();
+        throw createHttpError(404, "Image not found");
       }
 
       const updatedImage = await prisma.images.update({
@@ -105,21 +102,15 @@ export const ImagesController = Object.freeze({
       ]);
       return res.status(200).json({ image: freshUrlImage });
     } catch (err) {
-      handleError({
-        error: { from: "Checking single image on google", err },
-        res,
-      });
+      next(err);
     }
   },
-  getSortCounts: async (req: Request, res: Response) => {
+  getSortCounts: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const counts = await getSortCounts(req.locals.appUser.id);
       return res.status(200).json(counts);
     } catch (err) {
-      handleError({
-        error: { from: "Counts", err },
-        res,
-      });
+      next(err);
     }
   },
 });

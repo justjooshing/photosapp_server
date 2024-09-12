@@ -21,6 +21,7 @@
     "gaxios": "^6.7.0",
     "google-auth-library": "^9.6.3",
     "googleapis": "^133.0.0",
+    "http-errors": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
     "ky": "^1.2.2",
     "p-limit": "^5.0.0",

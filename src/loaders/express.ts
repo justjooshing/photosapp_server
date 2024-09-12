@@ -5,6 +5,7 @@ import { routes } from "../api/routes.js";
 import { CONFIG } from "../config/index.js";
 import { handleCorsOrigin } from "../middleware/cors.js";
 import { MiddlewareProps } from "@/api/types.js";
+import { errorHandler } from "../middleware/errors.js";
 
 export const expressSetup = (app: Express) => {
   app.use(cors({ origin: handleCorsOrigin }));
@@ -17,4 +18,5 @@ export const expressSetup = (app: Express) => {
     next();
   });
   app.use(CONFIG.api.prefix, routes());
+  app.use(errorHandler);
 };

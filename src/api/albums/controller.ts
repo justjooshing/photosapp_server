@@ -1,12 +1,12 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import {
   findAlbums,
   selectAlbum,
   updateWithFirstImage,
 } from "@/api/albums/services/albums.js";
 import { checkValidBaseUrl } from "@/api/images/services/images.js";
-import { handleError } from "@/api/utils/index.js";
 import { SortOptions } from "@/api/images/types.js";
+import createHttpError from "http-errors";
 
 export const AlbumController = Object.freeze({
   getAlbumWithFirstImages: async (
@@ -14,6 +14,7 @@ export const AlbumController = Object.freeze({
       query: { sorted_status: SortOptions; lastAlbumId: string };
     },
     res: Response,
+    next: NextFunction,
   ) => {
     try {
       const albums = await findAlbums(
@@ -30,13 +31,14 @@ export const AlbumController = Object.freeze({
 
       return res.json({ albums: data });
     } catch (err) {
-      handleError({
-        error: { from: "fetching albums", err },
-        res,
-      });
+      next(err);
     }
   },
-  getImagesFromSpecificAlbum: async (req: Request, res: Response) => {
+  getImagesFromSpecificAlbum: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       const { appUser, access_token } = req.locals;
 
@@ -45,7 +47,7 @@ export const AlbumController = Object.freeze({
         Number(req.params.albumId),
       );
       if (!albumDetails) {
-        return res.status(404).end();
+        throw createHttpError(404, "Album not found");
       }
 
       const freshUrlImages = await checkValidBaseUrl(
@@ -57,10 +59,7 @@ export const AlbumController = Object.freeze({
         .status(200)
         .json({ title: albumDetails.title, images: freshUrlImages });
     } catch (err) {
-      handleError({
-        error: { from: "Images in specific album", err },
-        res,
-      });
+      next(err);
     }
   },
 });

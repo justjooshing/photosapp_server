@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { handleError } from "@/api/utils/index.js";
 import { google } from "googleapis";
 import { getTokenFromHeader, jwtHandler } from "@/api/auth/helpers.js";
 import { CONFIG, oauth2Config } from "../config/index.js";
 import { getRefreshToken } from "@/api/auth/services.js";
+import createHttpError from "http-errors";
 
 export const checkJWT = async (
   req: Request,
@@ -17,11 +17,7 @@ export const checkJWT = async (
     req.locals.access_token = access_token;
     next();
   } catch (err) {
-    return handleError({
-      error: { from: "JWT", err },
-      res,
-      callback: () => res.status(401).end(),
-    });
+    next(createHttpError(401, err as Error));
   }
 };
 
@@ -42,7 +38,7 @@ export const refreshAuthToken = async (
       );
 
       if (aud !== CONFIG.oauth2Credentials.client_id) {
-        throw new Error("OAuth2 client/aud mismatch");
+        throw createHttpError(403, "OAuth2 client/aud mismatch");
       }
 
       // refresh if expiry date is in less than 10 minutes
@@ -69,10 +65,6 @@ export const refreshAuthToken = async (
     }
     next();
   } catch (err) {
-    return handleError({
-      error: { from: "Refresh auth token", err },
-      res,
-      callback: () => res.status(401).end(),
-    });
+    next(err);
   }
 };

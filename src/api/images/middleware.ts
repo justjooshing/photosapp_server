@@ -1,5 +1,4 @@
 import { zImage, zImageId, zImageType } from "./validation.js";
-import { handleError } from "@/api/utils/index.js";
 import { NextFunction, Request, Response } from "express";
 
 export const validateImageType = (
@@ -11,10 +10,7 @@ export const validateImageType = (
     zImageType.parse({ type: req.query.type });
     next();
   } catch (err) {
-    return handleError({
-      error: { from: "Single image validation", err },
-      res,
-    });
+    next(err);
   }
 };
 
@@ -27,10 +23,7 @@ export const validateGetSingleImage = (
     zImageId.parse({ id: req.params.imageId });
     next();
   } catch (err) {
-    return handleError({
-      error: { from: "Check single image validation", err },
-      res,
-    });
+    next(err);
   }
 };
 
@@ -44,9 +37,6 @@ export const validateUpdateSingleImage = (
     zImage.parse(req.body);
     next();
   } catch (err) {
-    return handleError({
-      error: { from: "Single image validation", err },
-      res,
-    });
+    next(err);
   }
 };

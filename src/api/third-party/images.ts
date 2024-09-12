@@ -4,21 +4,27 @@ import {
   HandleGetSpecificImages,
 } from "@/api/images/services/types.js";
 import { MediaItemResultsImages, Images } from "./types.js";
+import createHttpError from "http-errors";
 
 const endpoint = "https://photoslibrary.googleapis.com/v1/mediaItems";
 
 export const handleGetSpecificImages = async ({
   access_token,
   searchParams,
-}: HandleGetSpecificImages) =>
-  ky
-    .get(endpoint + ":batchGet", {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-      searchParams,
-    })
-    .json<MediaItemResultsImages>();
+}: HandleGetSpecificImages) => {
+  try {
+    return await ky
+      .get(endpoint + ":batchGet", {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+        searchParams,
+      })
+      .json<MediaItemResultsImages>();
+  } catch (err) {
+    throw createHttpError(502, err as Error);
+  }
+};
 
 export const handleGetNewImages = async ({
   access_token,
