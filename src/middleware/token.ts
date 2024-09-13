@@ -33,9 +33,14 @@ export const refreshAuthToken = async (
       res.set("Cache-Control", "private, must-revalidate, no-cache");
 
       client.setCredentials({ access_token });
-      const { expiry_date, email, aud } = await client.getTokenInfo(
-        access_token,
-      );
+
+      const { email, aud, expiry_date } = await (async () => {
+        try {
+          return await client.getTokenInfo(access_token);
+        } catch (err) {
+          throw createHttpError(401, "Invalid token");
+        }
+      })();
 
       if (aud !== CONFIG.oauth2Credentials.client_id) {
         throw createHttpError(403, "OAuth2 client/aud mismatch");
