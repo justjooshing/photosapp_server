@@ -4,13 +4,13 @@ import {
   findOrCreateUser,
   updateUserLastUpdate,
 } from "@/api/user/services/user.js";
-import { updateNewestImages } from "@/api/images/services/images.js";
 import { getGoogleUser } from "@/api/third-party/user.js";
 import { generateAccessToken } from "@/api/third-party/auth.js";
 import { updateRefeshToken } from "./services.js";
 import { getSocketInstance } from "@/loaders/socket.js";
 import { jwtHandler } from "./helpers.js";
 import createHttpError from "http-errors";
+import { updateNewestImages } from "../images/helpers.js";
 
 const redirect_uri = CONFIG.redirect_uri;
 

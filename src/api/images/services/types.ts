@@ -4,7 +4,10 @@ import {
   user as SchemaUser,
   image_sets as SchemaImagesSets,
 } from "@prisma/client";
-import { MediaItemSearch } from "@/api/third-party/types.js";
+import {
+  MediaItemResultSuccess,
+  MediaItemSearch,
+} from "@/api/third-party/types.js";
 export { SchemaImages, SchemaAlbum, SchemaUser, SchemaImagesSets };
 
 export interface LoadImagesParams {
@@ -39,3 +42,8 @@ type StatisticKeys =
   | "albumsKept";
 
 export type ApiCounts = Record<StatisticKeys, CountStatistics>;
+
+export interface RefreshedImageSorter {
+  erroredImageIds: number[];
+  refreshedImages: MediaItemResultSuccess["mediaItem"][];
+}

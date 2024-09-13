@@ -1,72 +1,16 @@
-import {
-  ApiCounts,
-  ApiImages,
-  LoadImagesParams,
-  SchemaImages,
-  SchemaImagesSets,
-  SchemaUser,
-} from "./types.js";
-import { newestImagesFilter } from "@/api/third-party/filters.js";
+import { ApiCounts, SchemaImages, SchemaImagesSets } from "./types.js";
 import { prisma } from "@/loaders/prisma.js";
-import {
-  Images,
-  MediaItemResultError,
-  MediaItemResultSuccess,
-} from "@/api/third-party/types.js";
-import { group_similar } from "./queries.js";
-import {
-  bigIntToString,
-  excludeMimeType,
-  prismaRawSql,
-} from "@/api/utils/index.js";
-import pLimit from "p-limit";
-import {
-  getImageSize,
-  handleGetNewImages,
-  handleGetSpecificImages,
-} from "@/api/third-party/images.js";
+import { Images, MediaItemResultSuccess } from "@/api/third-party/types.js";
+import { bigIntToString, excludeMimeType } from "@/api/utils/index.js";
 import { SortOptions } from "@/api/images/types.js";
-import { getSocketInstance } from "@/loaders/socket.js";
 
-export const fetchAllImages = async ({
-  access_token,
-  userId,
-  bodyParams,
-}: LoadImagesParams) => {
-  try {
-    const { mediaItems, nextPageToken } = await handleGetNewImages({
-      access_token,
-      bodyParams,
-    });
-    await updateImagesDB(userId, mediaItems);
-    await sortSimilarImages(userId);
-    await updateImageSizes(access_token, userId);
-    const countLabel = "fetching next page";
-    if (nextPageToken) {
-      console.count(countLabel);
-      await fetchAllImages({
-        access_token,
-        userId,
-        bodyParams: { ...bodyParams, pageToken: nextPageToken },
-      });
-    } else {
-      // Close existing sockets since we've finished updating
-      const io = getSocketInstance();
-      io.in(userId.toString()).disconnectSockets();
-      console.countReset(countLabel);
-      console.info("No more pages");
-    }
-  } catch (err) {
-    console.error("FETCH ALL", err);
-    throw err;
-  }
-};
+import { Prisma } from "@prisma/client";
 
 export const sortSimilarImages = async (userId: number) => {
   console.info("Started: Sorting images into sets");
 
   // Images that aren't in image sets
-  const data = await prismaRawSql<
+  const data = await prisma.$queryRaw<
     Pick<SchemaImagesSets, "unsorted_image_ids" | "minute">[]
   >(group_similar(userId));
 
@@ -90,56 +34,22 @@ export const sortSimilarImages = async (userId: number) => {
       },
     });
 
-    const updatePromises = newlyCreatedImageSets.map((image_set) =>
-      tx.images.updateMany({
-        where: {
-          userId,
-          id: {
-            in: image_set.unsorted_image_ids,
+    const updatePromises = newlyCreatedImageSets.map(
+      ({ id, unsorted_image_ids }) =>
+        tx.images.updateMany({
+          where: {
+            userId,
+            id: {
+              in: unsorted_image_ids,
+            },
           },
-        },
-        data: { image_set_id: image_set.id },
-      }),
+          data: { image_set_id: id },
+        }),
     );
 
     await Promise.all(updatePromises);
     console.info("Finished: Sorting images into sets");
   });
-};
-
-export const updateNewestImages = async (
-  access_token: string,
-  appUser: SchemaUser,
-) => {
-  const { id, images_last_updated_at } = appUser;
-  // If last update is today
-  if (
-    images_last_updated_at &&
-    images_last_updated_at.toDateString() >= new Date().toDateString()
-  )
-    return;
-
-  const bodyParams = images_last_updated_at
-    ? {
-        filters: newestImagesFilter(images_last_updated_at),
-      }
-    : {};
-
-  try {
-    await fetchAllImages({
-      access_token,
-      userId: id,
-      bodyParams,
-    });
-
-    // Sweep to try and update any image sizes that we don't have
-    await updateImageSizes(access_token, id);
-
-    console.info(`${bodyParams.filters ? "new" : "initial"} images fetched`);
-  } catch (err) {
-    console.error(`${bodyParams.filters ? "new" : "initial"} load`, err);
-    throw err;
-  }
 };
 
 export const findImage = async (
@@ -174,7 +84,10 @@ const identifyNewImages = async (
   return newImages;
 };
 
-const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
+export const updateImagesDB = async (
+  userId: number,
+  images: Images["mediaItems"],
+) => {
   try {
     const newImages = await identifyNewImages(userId, images);
     if (newImages.length) {
@@ -198,12 +111,26 @@ const updateImagesDB = async (userId: number, images: Images["mediaItems"]) => {
   }
 };
 
-export const updateImageSizes = async (
-  access_token: string,
-  userId: number,
-) => {
-  const io = getSocketInstance();
-  const images = await prisma.images.findMany({
+export const updateImageSize = async (
+  image:
+    | {
+        baseUrl: string;
+        size: number;
+      }
+    | undefined,
+) =>
+  !image
+    ? Promise.resolve()
+    : prisma.$executeRaw(
+        Prisma.sql`
+      UPDATE "Images"
+      SET "size" = ${image.size}
+      WHERE "baseUrl" = ${image.baseUrl}
+      `,
+      );
+
+export const findSizelessUserImages = async (userId: number) =>
+  prisma.images.findMany({
     where: {
       userId,
       size: null,
@@ -212,187 +139,28 @@ export const updateImageSizes = async (
     },
   });
 
-  if (!images.length) return;
-
-  // refresh baseURLs to be sure we can request them
-  const withBaseURLs = await checkValidBaseUrl(access_token, images);
-  console.info("updated all base urls for images missing sizes");
-  const imageSizes = await concurrentlyGetImagesSizes(
-    access_token,
-    withBaseURLs,
-  );
-
-  if (!imageSizes?.length) return;
-
-  const countLabel = `Updating image size ${imageSizes.length}`;
-  const updatePromises = imageSizes.map((image) => {
-    if (image?.baseUrl && image?.size) {
-      console.count(countLabel);
-      return prisma.$executeRaw`
-          UPDATE "Images"
-          SET "size" = ${image.size}
-          WHERE "baseUrl" = ${image.baseUrl}
-        `;
-    }
-    return Promise.resolve();
+export const updateRefreshedImage = async (
+  image: MediaItemResultSuccess["mediaItem"],
+) =>
+  prisma.images.update({
+    where: {
+      googleId: image.id,
+    },
+    data: {
+      baseUrl: image.baseUrl,
+      baseUrl_last_updated: new Date(),
+      ...(!image.productUrl && {
+        productUrl: image.productUrl,
+      }),
+    },
   });
-  console.countReset(countLabel);
-  await Promise.all(updatePromises);
-
-  // Tell the FE to refetch image sizes
-  io.in(userId.toString()).emit("db_updated", { message: "sizes_updated" });
-  console.info("last image size updated");
-};
-
-export const concurrentlyGetImagesSizes = async (
-  access_token: string,
-  images: ApiImages[],
-) => {
-  try {
-    const limit = pLimit(50);
-    const countLabel = `concurrent requests of ${images.length}`;
-    const promises = images.reduce(
-      (
-        acc: Promise<{ baseUrl: string; size: number } | undefined>[],
-        { baseUrl },
-      ) => {
-        console.count(countLabel);
-        if (baseUrl) {
-          acc.push(limit(() => getImageSize(access_token, baseUrl)));
-        }
-        return acc;
-      },
-      [],
-    );
-
-    const results = await Promise.all(promises);
-    console.countReset(countLabel);
-
-    return results.filter((res) => !!res);
-  } catch (err) {
-    console.error("err", err);
-  }
-};
-
-export const checkValidBaseUrl = async (
-  access_token: string,
-  images: SchemaImages[],
-) => {
-  // Here, check which images don't currently have in-date baseUrls
-  const invalidIfBefore = new Date(new Date().getTime() - 1000 * 60 * 60);
-
-  const groupedUrls = Object.groupBy(images, (curr) => {
-    return !curr.baseUrl ||
-      !curr.baseUrl_last_updated ||
-      curr.baseUrl_last_updated < invalidIfBefore
-      ? "invalidBaseUrls"
-      : "validBaseUrls";
-  });
-
-  const validBaseUrls = groupedUrls.validBaseUrls || [];
-  const invalidBaseUrls = groupedUrls.invalidBaseUrls || [];
-
-  if (!invalidBaseUrls.length) {
-    return validBaseUrls.map(shapeImagesResponse);
-  }
-
-  const withFreshUrls = await addFreshBaseUrls(access_token, invalidBaseUrls);
-  const allImages: SchemaImages[] = validBaseUrls.concat(withFreshUrls);
-
-  const sortedImages = allImages.map(shapeImagesResponse);
-  return sortedImages;
-};
-
-// Super annoying having to refetch the image urls again
-export const addFreshBaseUrls = async (
-  access_token: string,
-  images: SchemaImages[],
-): Promise<SchemaImages[]> => {
-  console.info("adding fresh baseURLs");
-  try {
-    const mappedImages = new Map<string, SchemaImages>();
-    for (const image of images) {
-      mappedImages.set(image.googleId, image);
-    }
-
-    const erroredImages: MediaItemResultError[] = [];
-    const refreshedImages = new Map<
-      string,
-      MediaItemResultSuccess["mediaItem"]
-    >();
-
-    const dataset = Array.from(mappedImages.values());
-    while (dataset.length) {
-      // Chunk requests into sets of 50 mediaItemIds
-      const chunk = dataset.splice(0, 50);
-      console.info(
-        "requesting chunk",
-        `data remaining: ${dataset.length}`,
-        `errored urls: ${erroredImages.length}`,
-        `refreshed urls: ${refreshedImages.size}`,
-      );
-      const mediaItemIds = new URLSearchParams();
-      for (const image of chunk) {
-        mediaItemIds.append("mediaItemIds", image.googleId);
-      }
-      const data = await handleGetSpecificImages({
-        access_token,
-        searchParams: mediaItemIds,
-      });
-
-      data.mediaItemResults.forEach((item) => {
-        if ("status" in item) {
-          erroredImages.push(item);
-        } else {
-          refreshedImages.set(item.mediaItem.id, item.mediaItem);
-        }
-      });
-    }
-
-    console.info(
-      "finished requesting all base URLs",
-      dataset.length,
-      erroredImages.length,
-      refreshedImages.size,
-    );
-
-    if (erroredImages.length) {
-      await handleInvalidGoogleImageId(images, erroredImages);
-    }
-
-    const response = [];
-    const countLabel = `updating image of ${refreshedImages.size}`;
-    for (const image of refreshedImages.values()) {
-      console.count(countLabel);
-      const saved = await prisma.images.update({
-        where: {
-          googleId: image.id,
-        },
-        data: {
-          baseUrl: image.baseUrl,
-          baseUrl_last_updated: new Date(),
-          ...(!image.productUrl && {
-            productUrl: image.productUrl,
-          }),
-        },
-      });
-      response.push(saved);
-    }
-    console.countReset(countLabel);
-
-    return response;
-  } catch (err) {
-    console.error(err);
-    return [];
-  }
-};
 
 export const updateImagesByChoice = async (
   albumId: number,
   sorted_status: SortOptions,
   imageId: number,
 ): Promise<SchemaImages> =>
-  await prisma.images.update({
+  prisma.images.update({
     where: {
       id: imageId,
     },
@@ -403,52 +171,18 @@ export const updateImagesByChoice = async (
     },
   });
 
-export const shapeImagesResponse = ({
-  baseUrl,
-  productUrl,
-  id,
-  sorted_status,
-  sorted_album_id,
-  size,
-}: SchemaImages): ApiImages => ({
-  sorted_status,
-  sorted_album_id,
-  baseUrl,
-  productUrl,
-  id,
-  size: size ? size.toString() : null,
-});
-
-const handleInvalidGoogleImageId = async (
-  images: SchemaImages[],
-  erroredImages: MediaItemResultError[],
-) => {
-  // Save imageIDs that are erroring
-  const erroredIds: number[] = [];
-
-  for (const [index, image] of erroredImages.entries()) {
-    if (image.status.message === "Invalid media item ID.") {
-      erroredIds.push(images[index].id);
-    } else {
-      console.error(image.status.message);
-    }
-  }
-
-  const markGoogleDeletedImages = async () => {
-    const currentDate = new Date();
-    await prisma.images.updateMany({
-      where: {
-        id: {
-          in: erroredIds,
-        },
+export const handleInvalidGoogleImageId = async (erroredImageIds: number[]) => {
+  const currentDate = new Date();
+  await prisma.images.updateMany({
+    where: {
+      id: {
+        in: erroredImageIds,
       },
-      data: {
-        actually_deleted: currentDate,
-      },
-    });
-  };
-
-  await markGoogleDeletedImages();
+    },
+    data: {
+      actually_deleted: currentDate,
+    },
+  });
   console.info("Handled invalid google image ids");
 };
 
@@ -596,3 +330,79 @@ export const getSortCounts = async (userId: number): Promise<ApiCounts> => {
     },
   };
 };
+
+export const getSimilarImages = async (userId: number) => {
+  const imageSet = await prisma.image_sets.findFirst({
+    where: {
+      userId,
+      NOT: {
+        unsorted_image_ids: {
+          isEmpty: true,
+        },
+      },
+    },
+    orderBy: [
+      { minute: "asc" },
+      {
+        id: "asc",
+      },
+    ],
+    include: {
+      images: {
+        where: {
+          userId,
+          sorted_album_id: null,
+        },
+      },
+    },
+  });
+
+  return imageSet?.images || [];
+};
+
+export const getOldestImages = async (userId: number) =>
+  prisma.images.findMany({
+    where: {
+      userId,
+      updated_at: null,
+      actually_deleted: null,
+      ...excludeMimeType,
+    },
+    orderBy: [
+      {
+        created_at: "asc",
+      },
+      {
+        id: "asc",
+      },
+    ],
+    take: 5,
+  });
+
+export const getTodaysImages = async (userId: number) =>
+  prisma.$queryRaw<
+    SchemaImages[]
+  >(Prisma.sql`SELECT * FROM "Images" WHERE "userId" = ${userId}
+    AND updated_at IS NULL
+    AND actually_deleted IS NULL
+    AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE) 
+    AND EXTRACT(DAY FROM created_at) = EXTRACT(DAY FROM CURRENT_DATE)
+    AND mime_type != 'video/mp4'
+    AND mime_type IS NOT NULL
+    ORDER BY created_at ASC, id ASC
+    LIMIT 5`);
+
+/**
+ * Used alongside initial import
+ */
+export const group_similar = (userId: number) =>
+  Prisma.sql`SELECT date_trunc('minute', created_at) AS minute, array_agg(id) AS unsorted_image_ids FROM "Images" 
+  WHERE "userId" = ${userId}
+    AND image_set_id is NULL
+    AND updated_at IS NULL
+    AND actually_deleted IS NULL
+    AND mime_type != 'video/mp4'
+    AND mime_type IS NOT NULL
+  GROUP BY minute
+  HAVING count(*) > 1
+  ORDER BY minute`;

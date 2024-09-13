@@ -1,5 +1,4 @@
 import { prisma } from "@/loaders/prisma.js";
-import { checkValidBaseUrl } from "@/api/images/services/images.js";
 import {
   ApiImages,
   SchemaAlbum,
@@ -8,6 +7,7 @@ import {
 import { ApiAlbum } from "./types.js";
 import { SortOptions } from "@/api/images/types.js";
 import { excludeMimeType } from "@/api/utils/index.js";
+import { checkValidBaseUrl } from "@/api/images/helpers.js";
 
 export const findAlbums = async (
   userId: number,

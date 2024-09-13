@@ -13,7 +13,7 @@ export const handleGetSpecificImages = async ({
   searchParams,
 }: HandleGetSpecificImages) => {
   try {
-    return await ky
+    const { mediaItemResults } = await ky
       .get(endpoint + ":batchGet", {
         headers: {
           Authorization: `Bearer ${access_token}`,
@@ -21,6 +21,7 @@ export const handleGetSpecificImages = async ({
         searchParams,
       })
       .json<MediaItemResultsImages>();
+    return mediaItemResults;
   } catch (err) {
     throw createHttpError(502, err as Error);
   }

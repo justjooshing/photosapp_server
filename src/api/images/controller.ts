@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import {
-  checkValidBaseUrl,
   findImage,
   getSortCounts,
   sortImageSet,
@@ -9,9 +8,9 @@ import {
 import { getOrCreateCurrentAlbum } from "@/api/albums/services/albums.js";
 import { ApiImages } from "@/api/images/services/types.js";
 import { prisma } from "@/loaders/prisma.js";
-import { queryByImageType } from "@/api/images/services/queries.js";
 import { ImageType } from "@/api/images/types.js";
 import createHttpError from "http-errors";
+import { checkValidBaseUrl, queryByImageType } from "./helpers.js";
 
 export const ImagesController = Object.freeze({
   getImagesByType: async (

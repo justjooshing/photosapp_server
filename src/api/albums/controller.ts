@@ -4,9 +4,9 @@ import {
   selectAlbum,
   updateWithFirstImage,
 } from "@/api/albums/services/albums.js";
-import { checkValidBaseUrl } from "@/api/images/services/images.js";
 import { SortOptions } from "@/api/images/types.js";
 import createHttpError from "http-errors";
+import { checkValidBaseUrl } from "../images/helpers.js";
 
 export const AlbumController = Object.freeze({
   getAlbumWithFirstImages: async (
