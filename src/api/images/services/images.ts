@@ -335,6 +335,14 @@ export const getSimilarImages = async (userId: number) => {
   const imageSet = await prisma.image_sets.findFirst({
     where: {
       userId,
+      images: {
+        some: {
+          AND: {
+            actually_deleted: null,
+            sorted_status: null,
+          },
+        },
+      },
       NOT: {
         unsorted_image_ids: {
           isEmpty: true,
