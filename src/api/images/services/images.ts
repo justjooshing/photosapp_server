@@ -69,7 +69,13 @@ const identifyNewImages = async (
 ) => {
   const existingImageGoogleIds = await prisma.images
     .findMany({
-      where: { userId },
+      where: {
+        userId,
+        // only grab images image with matching google id
+        googleId: {
+          in: images.map(({ id }) => id),
+        },
+      },
       select: {
         googleId: true,
       },
