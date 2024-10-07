@@ -23,13 +23,13 @@ import {
 
 export const ImagesController = Object.freeze({
   refetchImages: async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Forcing refetch");
+    const {
+      access_token,
+      appUser: { id: userId },
+    } = req.locals;
+    console.log("Forcing refetch for ", userId);
+    res.status(204).end();
     try {
-      const {
-        access_token,
-        appUser: { id: userId },
-      } = req.locals;
-
       const lastRefetchDate = await getAllImagesLastUpdated(userId);
 
       const lastAllUpdated = splitDateString_DateOnly(lastRefetchDate);
@@ -43,8 +43,6 @@ export const ImagesController = Object.freeze({
         });
 
         await updateAllImagesLastUpdated(userId);
-
-        res.status(204).end();
       }
     } catch (err) {
       next(err);
