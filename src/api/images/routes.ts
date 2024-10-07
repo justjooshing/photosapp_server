@@ -11,6 +11,7 @@ export const images = (app: Router) => {
 
   route.get("/", validateImageType, ImagesController.getImagesByType);
   route.get("/count", ImagesController.getSortCounts);
+  route.post("/refetch-all", ImagesController.refetchImages);
   route.get(
     "/:imageId",
     validateGetSingleImage,

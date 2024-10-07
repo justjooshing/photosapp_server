@@ -10,9 +10,46 @@ import { ApiImages } from "@/api/images/services/types.js";
 import { prisma } from "@/loaders/prisma.js";
 import { ImageType } from "@/api/images/types.js";
 import createHttpError from "http-errors";
-import { checkValidBaseUrl, queryByImageType } from "./helpers.js";
+import {
+  checkValidBaseUrl,
+  fetchAllImages,
+  queryByImageType,
+} from "./helpers.js";
+import { splitDateString_DateOnly } from "../utils/index.js";
+import {
+  getAllImagesLastUpdated,
+  updateAllImagesLastUpdated,
+} from "../user/services/user.js";
 
 export const ImagesController = Object.freeze({
+  refetchImages: async (req: Request, res: Response, next: NextFunction) => {
+    console.log("Forcing refetch");
+    try {
+      const {
+        access_token,
+        appUser: { id: userId },
+      } = req.locals;
+
+      const lastRefetchDate = await getAllImagesLastUpdated(userId);
+
+      const lastAllUpdated = splitDateString_DateOnly(lastRefetchDate);
+      const currentDate = splitDateString_DateOnly(new Date());
+
+      if (lastAllUpdated < currentDate) {
+        await fetchAllImages({
+          access_token,
+          userId,
+          bodyParams: {},
+        });
+
+        await updateAllImagesLastUpdated(userId);
+
+        res.status(204).end();
+      }
+    } catch (err) {
+      next(err);
+    }
+  },
   getImagesByType: async (
     req: Request & { query: { type: ImageType } },
     res: Response,

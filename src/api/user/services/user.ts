@@ -8,6 +8,7 @@ const createNewUser = async ({ email, id, picture }: UserData) => {
       googleId: id,
       email,
       googleProfilePicture: picture,
+      images_last_updated_at: new Date(),
     },
   });
   console.info("database updated");
@@ -40,5 +41,27 @@ export const updateUserLastUpdate = async (userId: number) =>
     },
     data: {
       images_last_updated_at: new Date(),
+    },
+  });
+
+export const getAllImagesLastUpdated = async (userId: number) =>
+  prisma.user
+    .findUniqueOrThrow({
+      where: {
+        id: userId,
+      },
+      select: {
+        all_images_last_updated_at: true,
+      },
+    })
+    .then(({ all_images_last_updated_at }) => all_images_last_updated_at);
+
+export const updateAllImagesLastUpdated = async (userId: number) =>
+  prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      all_images_last_updated_at: new Date(),
     },
   });
