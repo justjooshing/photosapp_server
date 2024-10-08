@@ -356,6 +356,7 @@ export const getSimilarImages = async (userId: number) => {
       },
     },
     orderBy: [
+      { images: { _count: "desc" } },
       { minute: "asc" },
       {
         id: "asc",
