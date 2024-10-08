@@ -4,6 +4,11 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+enum SkipReason {
+  SKIP
+  INACCURATE
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -54,13 +59,14 @@ model images {
 }
 
 model image_sets {
-  id                 Int      @id @default(autoincrement())
+  id                 Int         @id @default(autoincrement())
   minute             DateTime
-  user               user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               user        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId             Int
   unsorted_image_ids Int[]
   sorted_image_ids   Int[]
   images             images[]
+  skip_reason        SkipReason?
 
   @@index([userId])
   @@map("Image_Sets")
