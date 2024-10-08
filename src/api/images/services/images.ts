@@ -341,6 +341,7 @@ export const getSimilarImages = async (userId: number) => {
   const imageSet = await prisma.image_sets.findFirst({
     where: {
       userId,
+      skip_reason: null,
       images: {
         some: {
           AND: {

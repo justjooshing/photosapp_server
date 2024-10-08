@@ -7,6 +7,8 @@ import {
 import { SortOptions } from "@/api/images/types.js";
 import createHttpError from "http-errors";
 import { checkValidBaseUrl } from "../images/helpers.js";
+import { SkipOptions } from "./types.js";
+import { prisma } from "@/loaders/prisma.js";
 
 export const AlbumController = Object.freeze({
   getAlbumWithFirstImages: async (
@@ -58,6 +60,39 @@ export const AlbumController = Object.freeze({
       return res
         .status(200)
         .json({ title: albumDetails.title, images: freshUrlImages });
+    } catch (err) {
+      next(err);
+    }
+  },
+  skipAlbum: async (
+    req: Request & {
+      body: { skip_reason: SkipOptions; first_image_id: number };
+    },
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      // Find the image_set that they've skipped
+      const imageSet = await prisma.image_sets.findFirst({
+        where: {
+          images: {
+            some: {
+              id: req.body.first_image_id,
+            },
+          },
+        },
+      });
+      if (!imageSet?.id) throw createHttpError(404, "Image set not found");
+
+      await prisma.image_sets.update({
+        where: {
+          id: imageSet.id,
+        },
+        data: {
+          skip_reason: req.body.skip_reason.toUpperCase(),
+        },
+      });
+      res.status(200).end();
     } catch (err) {
       next(err);
     }

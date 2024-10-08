@@ -1,4 +1,4 @@
-import { zAlbumParams, zSingleAlbumId } from "./validation.js";
+import { zAlbumParams, zSingleAlbumId, zSkipAlbum } from "./validation.js";
 import { RequestHandler } from "express";
 
 export const validateSingleAlbum: RequestHandler = (req, res, next) => {
@@ -13,6 +13,15 @@ export const validateSingleAlbum: RequestHandler = (req, res, next) => {
 export const validateGetAlbums: RequestHandler = (req, res, next) => {
   try {
     zAlbumParams.parse(req.query);
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const validateSkipAlbum: RequestHandler = (req, res, next) => {
+  try {
+    zSkipAlbum.parse(req.body);
     next();
   } catch (err) {
     next(err);
