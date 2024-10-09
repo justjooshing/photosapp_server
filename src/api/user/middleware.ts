@@ -7,15 +7,12 @@ export const getUserData = async (
   res: Response,
   next: NextFunction,
 ) => {
-  try {
-    const { email } = await getGoogleUser(req.locals.access_token);
-    const appUser = await findUser(email);
-    if (!appUser) {
-      return res.status(404).end();
-    }
-    req.locals.appUser = appUser;
-    next();
-  } catch (err) {
-    next(err);
+  const { email } = await getGoogleUser(req.locals.access_token);
+  const appUser = await findUser(email);
+  if (!appUser) {
+    res.status(404).end();
+    return;
   }
+  req.locals.appUser = appUser;
+  next();
 };

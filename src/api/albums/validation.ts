@@ -13,7 +13,9 @@ export const zAlbumParams = z.object({
 });
 
 export const zSingleAlbumId = z.object({
-  albumId: z.coerce.number({ invalid_type_error: "Album ID is not a number" }),
+  albumId: z.coerce
+    .number({ invalid_type_error: "Album ID is not a number" })
+    .positive("Album ID is not a number"),
 });
 
 export const zSkipAlbum = z.object({

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { CONFIG, oauth2Client } from "@/config/index.js";
 import {
   findOrCreateUser,
@@ -15,35 +15,25 @@ import { updateNewestImages } from "../images/helpers.js";
 const redirect_uri = CONFIG.redirect_uri;
 
 export const AuthController = Object.freeze({
-  appLogin: (_: Request, res: Response, next: NextFunction) => {
-    try {
-      const loginLink = oauth2Client.generateAuthUrl({
-        access_type: "offline",
-        scope: CONFIG.oauth2Credentials.scopes,
-      });
+  appLogin: (_: Request, res: Response) => {
+    const loginLink = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: CONFIG.oauth2Credentials.scopes,
+    });
 
-      return res.status(200).json({ loginLink });
-    } catch (err) {
-      next(err);
-    }
+    res.status(200).json({ loginLink });
+    return;
   },
-  appLogout: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await oauth2Client.revokeToken(req.locals.access_token);
+  appLogout: async (req: Request, res: Response) => {
+    await oauth2Client.revokeToken(req.locals.access_token);
 
-      // force close existing sockets related to current user
-      const io = getSocketInstance();
-      io.in(req.locals.appUser.id.toString()).disconnectSockets();
-      return res.status(204).end();
-    } catch (err) {
-      next(err);
-    }
+    // force close existing sockets related to current user
+    const io = getSocketInstance();
+    io.in(req.locals.appUser.id.toString()).disconnectSockets();
+    res.status(204).end();
+    return;
   },
-  handleGoogleLogin: async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  handleGoogleLogin: async (req: Request, res: Response) => {
     try {
       if (req.query.error || typeof req.query.code !== "string") {
         throw createHttpError(400, "Login error or no auth code", {
@@ -74,9 +64,11 @@ export const AuthController = Object.freeze({
       res.redirect(uri.toString());
 
       // Only update after new images are fully processed in case of errors
-      return await updateUserLastUpdate(appUser.id);
+      await updateUserLastUpdate(appUser.id);
+      return;
     } catch (err) {
-      next(createHttpError(err as Error, { redirectUrl: redirect_uri }));
+      console.log("error", err);
+      throw createHttpError(err as Error, { redirectUrl: redirect_uri });
     }
   },
 });

@@ -9,18 +9,22 @@ import { ZodError } from "zod";
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   console.error({ status: err.status }, err);
   if (err instanceof ZodError) {
-    return res.status(400).end();
+    res.status(400).end();
+    return;
   }
   if (isHttpError(err)) {
     const { status, redirectUrl } = err;
 
-    return redirectUrl
+    redirectUrl
       ? res.status(status).redirect(redirectUrl)
       : res.status(status).end();
+    return;
   }
   // Gaxios error
   if (err.response?.status) {
-    return res.status(err.response.status).end();
+    res.status(err.response.status).end();
+    return;
   }
-  return res.status(500).end();
+  res.status(500).end();
+  return;
 };

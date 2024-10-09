@@ -11,7 +11,7 @@ const createNewUser = async ({ email, id, picture }: UserData) => {
       images_last_updated_at: new Date(),
     },
   });
-  console.info("database updated");
+  console.info("new user created");
   return newUser;
 };
 

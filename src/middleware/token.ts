@@ -17,7 +17,7 @@ export const checkJWT = async (
     req.locals.access_token = access_token;
     next();
   } catch (err) {
-    next(createHttpError(401, err as Error));
+    throw createHttpError(401, err as Error);
   }
 };
 
@@ -26,50 +26,46 @@ export const refreshAuthToken = async (
   res: Response,
   next: NextFunction,
 ) => {
-  try {
-    const { access_token } = req.locals;
-    if (access_token) {
-      const client = new google.auth.OAuth2(oauth2Config);
-      res.set("Cache-Control", "private, must-revalidate, no-cache");
+  const { access_token } = req.locals;
+  if (access_token) {
+    const client = new google.auth.OAuth2(oauth2Config);
+    res.set("Cache-Control", "private, must-revalidate, no-cache");
 
-      client.setCredentials({ access_token });
+    client.setCredentials({ access_token });
 
-      const { email, aud, expiry_date } = await (async () => {
-        try {
-          return await client.getTokenInfo(access_token);
-        } catch (err) {
-          throw createHttpError(401, "Invalid token");
-        }
-      })();
-
-      if (aud !== CONFIG.oauth2Credentials.client_id) {
-        throw createHttpError(403, "OAuth2 client/aud mismatch");
+    const { email, aud, expiry_date } = await (async () => {
+      try {
+        return await client.getTokenInfo(access_token);
+      } catch (err) {
+        throw createHttpError(401, "Invalid token");
       }
+    })();
 
-      // refresh if expiry date is in less than 10 minutes
-      const three_minutes = 1000 * 60 * 57;
-      const needsRefreshing = Date.now() > expiry_date - three_minutes;
-      if (email && needsRefreshing) {
-        console.info("Access token expired, refreshing...");
+    if (aud !== CONFIG.oauth2Credentials.client_id) {
+      throw createHttpError(403, "OAuth2 client/aud mismatch");
+    }
 
-        // get refresh_token
-        const refresh_token = await getRefreshToken({ email });
-        client.setCredentials({ refresh_token });
+    // refresh if expiry date is in less than 10 minutes
+    const three_minutes = 1000 * 60 * 57;
+    const needsRefreshing = Date.now() > expiry_date - three_minutes;
+    if (email && needsRefreshing) {
+      console.info("Access token expired, refreshing...");
 
-        const { credentials } = await client.refreshAccessToken();
-        client.setCredentials(credentials);
-        if (credentials.access_token) {
-          req.locals.access_token = credentials.access_token;
-          const new_token = jwtHandler.sign({
-            access_token: credentials.access_token,
-          });
-          res.header("Access-Control-Expose-Headers", "jwt");
-          res.setHeader("jwt", new_token);
-        }
+      // get refresh_token
+      const refresh_token = await getRefreshToken({ email });
+      client.setCredentials({ refresh_token });
+
+      const { credentials } = await client.refreshAccessToken();
+      client.setCredentials(credentials);
+      if (credentials.access_token) {
+        req.locals.access_token = credentials.access_token;
+        const new_token = jwtHandler.sign({
+          access_token: credentials.access_token,
+        });
+        res.header("Access-Control-Expose-Headers", "jwt");
+        res.setHeader("jwt", new_token);
       }
     }
-    next();
-  } catch (err) {
-    next(err);
   }
+  next();
 };

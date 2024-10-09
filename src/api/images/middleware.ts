@@ -6,12 +6,8 @@ export const validateImageType = (
   res: Response,
   next: NextFunction,
 ) => {
-  try {
-    zImageType.parse({ type: req.query.type });
-    next();
-  } catch (err) {
-    next(err);
-  }
+  zImageType.parse({ type: req.query.type });
+  next();
 };
 
 export const validateGetSingleImage = (
@@ -19,12 +15,8 @@ export const validateGetSingleImage = (
   res: Response,
   next: NextFunction,
 ) => {
-  try {
-    zImageId.parse({ id: req.params.imageId });
-    next();
-  } catch (err) {
-    next(err);
-  }
+  zImageId.parse({ id: req.params.imageId });
+  next();
 };
 
 export const validateUpdateSingleImage = (
@@ -32,11 +24,7 @@ export const validateUpdateSingleImage = (
   res: Response,
   next: NextFunction,
 ) => {
-  try {
-    zImageId.parse({ id: req.params.imageId });
-    zImage.parse(req.body);
-    next();
-  } catch (err) {
-    next(err);
-  }
+  zImageId.parse({ id: req.params.imageId });
+  zImage.parse(req.body);
+  next();
 };

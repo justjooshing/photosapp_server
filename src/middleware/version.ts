@@ -6,14 +6,10 @@ export const checkAppVersion = (
   res: Response,
   next: NextFunction,
 ) => {
-  try {
-    const version = req.header("app-version");
-    if (version !== "web" && (!version || !Number(version))) {
-      throw createHttpError(400, "Invalid app version");
-    }
-    req.locals.app_version = Number(version);
-    next();
-  } catch (err) {
-    next(err);
+  const version = req.header("app-version");
+  if (version !== "web" && (!version || !Number(version))) {
+    throw createHttpError(400, "Invalid app version");
   }
+  req.locals.app_version = Number(version);
+  next();
 };
