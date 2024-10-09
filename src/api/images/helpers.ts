@@ -29,6 +29,7 @@ import pLimit from "p-limit";
 import { newestImagesFilter } from "@/api/third-party/filters.js";
 import { getSocketInstance } from "@/loaders/socket.js";
 import { ImageType } from "./types.js";
+import { splitDateString_DateOnly } from "../utils/index.js";
 
 export const fetchAllImages = async ({
   access_token,
@@ -68,15 +69,17 @@ export const updateNewestImages = async (
   access_token: string,
   appUser: SchemaUser,
 ) => {
-  const { id, images_last_updated_at } = appUser;
+  console.log("grabbing newest images");
+  const { id, images_last_updated_at, created_at } = appUser;
   // If last update is today
-  if (
-    images_last_updated_at &&
-    images_last_updated_at.toDateString() >= new Date().toDateString()
-  )
+  const lastUpdated = splitDateString_DateOnly(images_last_updated_at);
+  const createdDate = splitDateString_DateOnly(created_at);
+  const isNewlyCreated = createdDate === lastUpdated;
+
+  if (!isNewlyCreated && lastUpdated >= splitDateString_DateOnly(new Date()))
     return;
 
-  const bodyParams = images_last_updated_at
+  const bodyParams = !isNewlyCreated
     ? {
         filters: newestImagesFilter(images_last_updated_at),
       }
