@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ImageType, SortOptions } from "@/api/images/types.js";
+import { validateNumber } from "../utils/validation.js";
 
 export const zImageType = z.object({
   type: z.nativeEnum(ImageType, {
@@ -9,9 +10,7 @@ export const zImageType = z.object({
 });
 
 export const zImageId = z.object({
-  id: z.coerce.number({
-    invalid_type_error: "Image ID must be a valid number",
-  }),
+  id: validateNumber("Image ID"),
 });
 
 export const zImage = z.object({
