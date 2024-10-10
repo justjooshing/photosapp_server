@@ -27,10 +27,10 @@ export const ImagesController = Object.freeze({
       access_token,
       appUser: { id: userId },
     } = req.locals;
-    console.log("Forcing refetch for ", userId);
+    console.info("Forcing refetch for User: ", userId);
     res.status(204).end();
     const lastRefetchDate = await getAllImagesLastUpdated(userId);
-    console.log({ lastRefetchDate });
+
     const lastAllUpdated = splitDateString_DateOnly(lastRefetchDate);
     const currentDate = splitDateString_DateOnly(new Date());
 

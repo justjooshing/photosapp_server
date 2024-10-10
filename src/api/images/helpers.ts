@@ -72,11 +72,13 @@ export const updateNewestImages = async (
   console.log("grabbing newest images");
   const { id, images_last_updated_at, created_at } = appUser;
   // If last update is today
-  const lastUpdated = splitDateString_DateOnly(images_last_updated_at);
-  const createdDate = splitDateString_DateOnly(created_at);
-  const isNewlyCreated = createdDate === lastUpdated;
+  const isNewlyCreated = images_last_updated_at === created_at;
 
-  if (!isNewlyCreated && lastUpdated >= splitDateString_DateOnly(new Date()))
+  if (
+    !isNewlyCreated &&
+    splitDateString_DateOnly(images_last_updated_at) >=
+      splitDateString_DateOnly(new Date())
+  )
     return;
 
   const bodyParams = !isNewlyCreated
