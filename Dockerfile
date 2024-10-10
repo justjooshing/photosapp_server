@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Set base Node.js version
-ARG NODE_VERSION=20.10.0
+ARG NODE_VERSION=22.4.0
 FROM node:${NODE_VERSION}-slim as base
 
 # Set metadata labels
@@ -14,8 +14,8 @@ WORKDIR /app
 ENV NODE_ENV="development"
 
 # Install Yarn globally
-ARG YARN_VERSION=1.22.10
-RUN npm install -g yarn@$YARN_VERSION --force
+ARG YARN_VERSION=4.5.0
+RUN corepack enable && corepack prepare yarn@$YARN_VERSION --activate
 
 # Throw-away build stage
 FROM base as build
@@ -27,12 +27,15 @@ apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-
 # Copy only necessary files for installing dependencies
 COPY package.json yarn.lock ./
 
+# Ensure node_modules are installed, and not use pnp
+RUN yarn config set nodeLinker node-modules
+
 # Install dependencies
 RUN yarn
 
 # Generate Prisma Client
 COPY prisma ./prisma
-RUN npx prisma generate
+RUN yarn prisma generate
 
 # Copy application code
 COPY . .
