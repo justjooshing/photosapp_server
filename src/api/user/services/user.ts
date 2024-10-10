@@ -8,7 +8,6 @@ const createNewUser = async ({ email, id, picture }: UserData) => {
       googleId: id,
       email,
       googleProfilePicture: picture,
-      images_last_updated_at: new Date(),
     },
   });
   console.info("new user created");
