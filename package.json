@@ -47,5 +47,6 @@
   },
   "resolutions": {
     "cookie": "^0.7.0"
-  }
+  },
+  "packageManager": "yarn@4.5.0"
 }
